@@ -12,10 +12,12 @@ import { activateLocale, getInitialLocale } from './i18n/runtime'
 import { applyTheme, getInitialTheme } from './features/theme/theme'
 import { registerServiceWorker } from './features/pwa/registerServiceWorker'
 import { listenForInstallPrompt } from './features/pwa/installPrompt'
+import { startUsageStats } from './features/usage-stats/usageStats'
 
 applyTheme(getInitialTheme())
 registerServiceWorker()
 listenForInstallPrompt()
+startUsageStats()
 
 // The catalog has to be loaded before the first render, or the UI would flash untranslated.
 // If the chosen language's catalog can't be fetched (offline), open in the default one instead.

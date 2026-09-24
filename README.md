@@ -6,6 +6,8 @@ Everything is stored locally in the browser (`localStorage`). There is no backen
 
 The only thing that leaves the device is an anonymous page-view ping (via [Vercel Web Analytics](https://vercel.com/docs/analytics)), used solely to count how many people use the app. It carries no identifiers and no check-in data.
 
+If `VITE_USAGE_ENDPOINT` is set and the athlete has agreed (`setUsageConsent(true)`), the app also sends one anonymous row per visit — day, minutes open and a few yes/no flags such as "first visit today" — to `api/usage.ts`, which stores it in Postgres. There is no user or device id; daily and weekly active users, time spent and week-by-week retention are computed by counting the flags (`analytics/metrics.sql`). Nothing the athlete records is ever included. See `src/features/usage-stats/usageStats.ts`.
+
 ## What's inside
 
 | Screen | Route | What it does |
