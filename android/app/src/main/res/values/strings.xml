@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BAB</string>
+    <string name="title_activity_main">BAB</string>
+    <string name="package_name">com.babsport.athletes</string>
+    <string name="custom_url_scheme">com.babsport.athletes</string>
+</resources>

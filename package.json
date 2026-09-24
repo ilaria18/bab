@@ -14,6 +14,11 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/app": "^8.1.1",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/preferences": "^8.0.1",
     "@lingui/core": "^6.7.0",
     "@lingui/react": "^6.7.0",
     "@vercel/analytics": "^2.0.1",
@@ -26,6 +31,7 @@
   "devDependencies": {
     "@babel/core": "^7.29.7",
     "@babel/types": "^8.0.6",
+    "@capacitor/cli": "^8.5.2",
     "@lingui/babel-plugin-lingui-macro": "^6.7.0",
     "@lingui/cli": "^6.7.0",
     "@lingui/vite-plugin": "^6.7.0",
