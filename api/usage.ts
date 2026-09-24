@@ -87,6 +87,10 @@ export async function POST(request: Request): Promise<Response> {
   if (!Array.isArray(events) || events.length > 50) return new Response(null, { status: 400, headers })
 
   const rows = events.map(toRow).filter((row): row is Row => row !== null)
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set for this deployment')
+    return new Response(null, { status: 503, headers })
+  }
   if (rows.length > 0) {
     const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
     const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/usage_visits`, {
@@ -98,11 +102,16 @@ export async function POST(request: Request): Promise<Response> {
         ...(key.startsWith('eyJ') ? { Authorization: `Bearer ${key}` } : {}),
         'Content-Type': 'application/json',
         Prefer: 'return=minimal',
+        // Supabase refuses secret keys from anything that looks like a browser
+        'User-Agent': 'bab-usage-endpoint/1.0',
       },
       body: JSON.stringify(rows),
     })
     // 5xx makes the app keep the rows and try again at the next opening
-    if (!response.ok) return new Response(null, { status: 502, headers })
+    if (!response.ok) {
+      console.error('Supabase refused the insert', response.status, await response.text())
+      return new Response(null, { status: 502, headers })
+    }
   }
   // malformed rows are dropped rather than retried forever
   return new Response(null, { status: 204, headers })
