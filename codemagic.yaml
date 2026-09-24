@@ -1,0 +1,52 @@
+# Builds the iPhone app on Codemagic's Macs and uploads it to TestFlight.
+# Started by hand from the Codemagic dashboard ("Start new build" → workflow "iOS → TestFlight").
+#
+# Needs, in Codemagic:
+#   - Team settings → Integrations → Developer Portal: an App Store Connect API key named
+#     "BAB App Store Connect" (created by the Apple account holder in App Store Connect →
+#     Users and Access → Integrations → Team Keys, role "App Manager")
+#   - Team settings → Code signing identities: an iOS Distribution certificate and an
+#     App Store provisioning profile for com.babsport.app
+# and below: the app's Apple ID (App Store Connect → the app → App Information → Apple ID).
+
+workflows:
+  ios-testflight:
+    name: iOS → TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: BAB App Store Connect
+    environment:
+      node: 22
+      xcode: latest # Capacitor 8 needs Xcode 26 or newer
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.babsport.app
+      vars:
+        APP_STORE_APPLE_ID: "0000000000" # TODO: the app's Apple ID from App Store Connect
+    scripts:
+      - name: Install dependencies
+        script: npm ci
+      - name: Test
+        script: npm test
+      - name: Build the web app
+        script: npm run build
+      - name: Copy it into the iOS project
+        script: npx cap sync ios
+      - name: Use the signing files
+        script: xcode-project use-profiles
+      - name: Next build number
+        script: |
+          LATEST=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo 0)
+          NEXT=$((LATEST + 1))
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = $NEXT;/g" ios/App/App.xcodeproj/project.pbxproj
+          echo "Build number $NEXT"
+      - name: Build the .ipa
+        script: xcode-project build-ipa --project ios/App/App.xcodeproj --scheme App
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
