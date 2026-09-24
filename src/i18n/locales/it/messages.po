@@ -507,3 +507,31 @@ msgstr "Non condividere"
 #: src/features/usage-stats/UsageStatsSetting.tsx
 msgid "Help us improve BAB: the app only sends how often and for how long it is opened, day by day. Never what you record, never your name, never anything that identifies you or your phone."
 msgstr "Aiutaci a migliorare BAB: l’app invia solo quante volte e per quanto tempo viene aperta, giorno per giorno. Mai quello che registri, mai il tuo nome, mai nulla che identifichi te o il tuo telefono."
+
+#: src/features/reminder
+msgid "Daily reminder"
+msgstr "Promemoria giornaliero"
+
+#: src/features/reminder
+msgid "On"
+msgstr "Attivo"
+
+#: src/features/reminder
+msgid "Off"
+msgstr "Spento"
+
+#: src/features/reminder
+msgid "Time"
+msgstr "Orario"
+
+#: src/features/reminder
+msgid "Notifications are blocked for BAB. Turn them on in your phone's settings."
+msgstr "Le notifiche di BAB sono bloccate. Attivale nelle impostazioni del telefono."
+
+#: src/features/reminder
+msgid "A notification every day at the time you choose."
+msgstr "Una notifica ogni giorno all’orario che scegli."
+
+#: src/features/reminder
+msgid "How was today? Take a minute to listen to your body."
+msgstr "Com’è andata oggi? Prenditi un minuto per ascoltare il tuo corpo."

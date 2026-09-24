@@ -62,3 +62,12 @@
 .settings-steps {
   padding-left: 20px;
 }
+
+.settings-reminder-time {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+  color: var(--color-ink);
+}

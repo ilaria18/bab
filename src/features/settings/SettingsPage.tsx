@@ -6,6 +6,7 @@ import { useInstallApp } from '@/features/pwa/installPrompt'
 import { useUserProfile } from '@/entities/user-profile/useUserProfile'
 import { LANGUAGE_SELECTION_ENABLED } from '@/i18n'
 import { UsageStatsSetting } from '@/features/usage-stats/UsageStatsSetting'
+import { ReminderSetting } from '@/features/reminder/ReminderSetting'
 import { LanguagePicker } from './LanguagePicker'
 import './SettingsPage.css'
 
@@ -53,6 +54,8 @@ export const SettingsPage = () => {
           </span>
           <ToggleSwitch options={themeOptions} value={theme} onChange={setTheme} />
         </div>
+
+        <ReminderSetting />
 
         <UsageStatsSetting />
 
