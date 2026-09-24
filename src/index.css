@@ -1,4 +1,10 @@
 :root {
+  /* Space taken by the phone's status bar / notch (top) and gesture bar (bottom).
+     Capacitor's Android app provides --safe-area-inset-* because older Android WebViews report
+     wrong env() values; browsers and iOS use env(). */
+  --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+
   --border: #e5e4e7;
   --accent: #aa3bff;
   --accent-bg: rgba(170, 59, 255, 0.1);

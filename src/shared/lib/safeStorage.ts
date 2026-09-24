@@ -31,13 +31,15 @@ export const hydrateStorage = async (): Promise<void> => {
       if (value !== null) memory.set(key, value)
     })
     // data written to the WebView's localStorage by an earlier build of the app: move it over once
-    for (let i = 0; i < window.localStorage.length; i++) {
-      const key = window.localStorage.key(i)
-      if (key === null || memory.has(key)) continue
+    const oldKeys = Array.from({ length: window.localStorage.length }, (_, i) => window.localStorage.key(i))
+    for (const key of oldKeys) {
+      if (key === null) continue
       const value = window.localStorage.getItem(key)
-      if (value === null) continue
-      memory.set(key, value)
-      await Preferences.set({ key, value })
+      if (value !== null && !memory.has(key)) {
+        memory.set(key, value)
+        await Preferences.set({ key, value })
+      }
+      window.localStorage.removeItem(key)
     }
   } catch (error) {
     console.error('Could not load stored data', error)

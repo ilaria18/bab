@@ -9,7 +9,7 @@
   color: var(--color-ink);
   font-family: var(--font-body);
   overflow: hidden;
-  padding-top: var(--padding);
+  padding-top: calc(var(--padding) + var(--safe-top));
   transition:
     background 0.2s ease,
     color 0.2s ease;

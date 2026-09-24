@@ -8,7 +8,7 @@
   --tab-bar-ink-muted-on-cycle: color-mix(in srgb, var(--tab-bar-ink-on-cycle) 55%, transparent);
   /* icon + label + top/bottom padding, so other screens can float content
      above the tab bar instead of guessing its rendered height */
-  --tab-bar-height: calc(76px + env(safe-area-inset-bottom, 0px));
+  --tab-bar-height: calc(76px + var(--safe-bottom));
 }
 
 .tab-bar {
@@ -35,7 +35,7 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 16px 0 calc(16px + env(safe-area-inset-bottom, 0px));
+  padding: 16px 0 calc(16px + var(--safe-bottom));
   color: var(--tab-bar-ink-muted-on-cycle);
   text-decoration: none;
 }
