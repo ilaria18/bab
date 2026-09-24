@@ -64,8 +64,9 @@ describe('usage stats', () => {
       ['2026-10-06', 30, false, true, true, 1, true],
     ])
     expect(new Set(sent.map((e) => e.cohort_week))).toEqual(new Set(['2026-W40']))
+    expect(new Set(sent.map((e) => e.platform))).toEqual(new Set(['web']))
     sent.forEach((e) => expect(Object.keys(e).sort()).toEqual(
-      ['cohort_week', 'continued', 'day', 'first_ever', 'first_of_day', 'first_of_life_week', 'first_of_week', 'seconds', 'v', 'week_since_first'],
+      ['cohort_week', 'continued', 'day', 'first_ever', 'first_of_day', 'first_of_life_week', 'first_of_week', 'platform', 'seconds', 'v', 'week_since_first'],
     ))
   })
 

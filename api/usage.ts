@@ -9,8 +9,13 @@
  * Environment variables (Vercel → Settings → Environment Variables):
  *   SUPABASE_URL                  https://<project>.supabase.co  (create the project in an EU region)
  *   SUPABASE_SERVICE_ROLE_KEY     server-side key, never exposed to the app
- *   USAGE_ALLOWED_ORIGINS         optional, comma separated, e.g. capacitor://localhost,https://localhost
+ *   USAGE_ALLOWED_ORIGINS         optional, extra origins allowed to send (comma separated);
+ *                                 the iOS and Android app origins are always allowed
  */
+
+/** where the Capacitor app runs from: iOS WebView, Android WebView */
+const APP_ORIGINS = ['capacitor://localhost', 'https://localhost']
+const PLATFORMS = ['ios', 'android', 'web']
 
 type Row = {
   day: string
@@ -22,6 +27,7 @@ type Row = {
   first_of_week: boolean
   first_of_life_week: boolean
   continued: boolean
+  platform: string
 }
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/
@@ -31,7 +37,9 @@ const toRow = (input: unknown): Row | null => {
   if (typeof input !== 'object' || input === null) return null
   const e = input as Record<string, unknown>
   const flags = ['first_ever', 'first_of_day', 'first_of_week', 'first_of_life_week', 'continued'] as const
-  if (e.v !== 1) return null
+  if (e.v !== 1 && e.v !== 2) return null
+  const platform = e.v === 1 ? 'web' : e.platform
+  if (typeof platform !== 'string' || !PLATFORMS.includes(platform)) return null
   if (typeof e.day !== 'string' || !DAY.test(e.day)) return null
   if (typeof e.cohort_week !== 'string' || !WEEK.test(e.cohort_week)) return null
   if (!Number.isInteger(e.seconds) || (e.seconds as number) < 0) return null
@@ -48,12 +56,14 @@ const toRow = (input: unknown): Row | null => {
     first_of_week: e.first_of_week as boolean,
     first_of_life_week: e.first_of_life_week as boolean,
     continued: e.continued as boolean,
+    platform,
   }
 }
 
 const corsHeaders = (request: Request): Record<string, string> => {
   const origin = request.headers.get('origin') ?? ''
-  const allowed = (process.env.USAGE_ALLOWED_ORIGINS ?? '').split(',').map((o) => o.trim())
+  const extra = (process.env.USAGE_ALLOWED_ORIGINS ?? '').split(',').map((o) => o.trim()).filter(Boolean)
+  const allowed = [...APP_ORIGINS, ...extra]
   return allowed.includes(origin)
     ? { 'Access-Control-Allow-Origin': origin, 'Access-Control-Allow-Methods': 'POST', Vary: 'Origin' }
     : {}

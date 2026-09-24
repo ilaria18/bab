@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { isNativeApp } from '@/shared/lib/platform'
 
 /** How the user can get the app onto their home screen / desktop:
  * - installed: already running as an installed app
@@ -36,6 +37,8 @@ const isAndroid = (): boolean => /android/i.test(navigator.userAgent)
 const isIosSafari = (): boolean => !/crios|fxios|edgios|opios/i.test(navigator.userAgent)
 
 const getStatus = (): InstallStatus => {
+  // inside the iOS/Android app there is nothing to install
+  if (isNativeApp()) return 'unavailable'
   if (!isIos() && !isAndroid()) return 'unavailable'
   if (installed || isStandalone()) return 'installed'
   if (deferredPrompt) return 'prompt'

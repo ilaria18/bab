@@ -1,4 +1,6 @@
+import { App } from '@capacitor/app'
 import { differenceInCalendarDays, getISOWeek, getISOWeekYear, parseISO } from 'date-fns'
+import { appPlatform, isNativeApp, type AppPlatform } from '@/shared/lib/platform'
 import { toDateKey } from '@/shared/lib/dateKey'
 import { safeStorage } from '@/shared/lib/safeStorage'
 
@@ -17,7 +19,7 @@ import { safeStorage } from '@/shared/lib/safeStorage'
  */
 
 export type UsageEvent = {
-  v: 1
+  v: 2
   /** local calendar day of the visit, YYYY-MM-DD */
   day: string
   /** time the app was in the foreground, rounded to 10 s */
@@ -34,6 +36,8 @@ export type UsageEvent = {
   first_of_life_week: boolean
   /** the app came back within RESUME_WINDOW_MS: extra time for the previous visit, not a new opening */
   continued: boolean
+  /** ios / android app, or web — to compare the two halves of a team */
+  platform: AppPlatform
 }
 
 type State = {
@@ -86,6 +90,8 @@ export const setUsageConsent = (consent: boolean): void => {
 
 type Options = {
   endpoint?: string
+  platform?: AppPlatform
+  native?: boolean
   now?: () => number
   send?: (endpoint: string, events: UsageEvent[]) => Promise<boolean>
   doc?: Document
@@ -112,6 +118,8 @@ const defaultSend = async (endpoint: string, events: UsageEvent[]): Promise<bool
 /** Starts measuring visits. Returns a function that stops listening (used by tests). */
 export const startUsageStats = ({
   endpoint = import.meta.env.VITE_USAGE_ENDPOINT as string | undefined,
+  platform = appPlatform(),
+  native = isNativeApp(),
   now = Date.now,
   send = defaultSend,
   doc = document,
@@ -151,7 +159,7 @@ export const startUsageStats = ({
     const lifeWeek = Math.floor(differenceInCalendarDays(date, parseISO(firstDay)) / 7)
 
     const event: UsageEvent = {
-      v: 1,
+      v: 2,
       day,
       seconds: Math.round(duration / 10_000) * 10,
       cohort_week: isoWeekKey(parseISO(firstDay)),
@@ -161,6 +169,7 @@ export const startUsageStats = ({
       first_of_week: !continued && state.lastWeek !== week,
       first_of_life_week: !continued && state.lastLifeWeek !== lifeWeek,
       continued,
+      platform,
     }
 
     saveState({
@@ -189,10 +198,17 @@ export const startUsageStats = ({
 
   doc.addEventListener('visibilitychange', onVisibility)
   window.addEventListener('pagehide', onPageHide)
+  // In the app the WebView's visibility events are not reliable on every phone: the system's own
+  // foreground/background signal is. Both may fire for the same change — startVisit/endVisit
+  // ignore the second call.
+  const appListener = native
+    ? App.addListener('appStateChange', ({ isActive }) => (isActive ? startVisit() : endVisit()))
+    : null
   if (visibleSince !== null) void flush()
 
   return () => {
     doc.removeEventListener('visibilitychange', onVisibility)
     window.removeEventListener('pagehide', onPageHide)
+    void appListener?.then((handle) => handle.remove())
   }
 }

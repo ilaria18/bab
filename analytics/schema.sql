@@ -11,7 +11,8 @@ create table if not exists usage_visits (
   first_of_day        boolean  not null,               -- first visit of that device that day
   first_of_week       boolean  not null,               -- first visit of that device that ISO week
   first_of_life_week  boolean  not null,               -- first visit in that week_since_first
-  continued           boolean  not null                -- came back within 30 s: extra time, not a new opening
+  continued           boolean  not null,               -- came back within 30 s: extra time, not a new opening
+  platform            text     not null default 'web' check (platform in ('ios', 'android', 'web'))
 );
 
 -- Only the server (service role) may write, and nobody may read through the public API.
