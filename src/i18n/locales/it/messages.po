@@ -491,3 +491,19 @@ msgstr "Il tuo personaggio, con {hat}"
 #: src/features/settings/SettingsPage.tsx:33
 msgid "Your name"
 msgstr "Il tuo nome"
+
+#: src/features/usage-stats/UsageStatsSetting.tsx
+msgid "Anonymous statistics"
+msgstr "Statistiche anonime"
+
+#: src/features/usage-stats/UsageStatsSetting.tsx
+msgid "Share"
+msgstr "Condividi"
+
+#: src/features/usage-stats/UsageStatsSetting.tsx
+msgid "Don't share"
+msgstr "Non condividere"
+
+#: src/features/usage-stats/UsageStatsSetting.tsx
+msgid "Help us improve BAB: the app only sends how often and for how long it is opened, day by day. Never what you record, never your name, never anything that identifies you or your phone."
+msgstr "Aiutaci a migliorare BAB: l’app invia solo quante volte e per quanto tempo viene aperta, giorno per giorno. Mai quello che registri, mai il tuo nome, mai nulla che identifichi te o il tuo telefono."
