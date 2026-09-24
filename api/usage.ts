@@ -8,7 +8,7 @@
  *
  * Environment variables (Vercel → Settings → Environment Variables):
  *   SUPABASE_URL                  https://<project>.supabase.co  (create the project in an EU region)
- *   SUPABASE_SERVICE_ROLE_KEY     server-side key, never exposed to the app
+ *   SUPABASE_SERVICE_ROLE_KEY     the project's secret key (sb_secret_… or legacy service_role), never exposed to the app
  *   USAGE_ALLOWED_ORIGINS         optional, extra origins allowed to send (comma separated);
  *                                 the iOS and Android app origins are always allowed
  */
@@ -88,11 +88,14 @@ export async function POST(request: Request): Promise<Response> {
 
   const rows = events.map(toRow).filter((row): row is Row => row !== null)
   if (rows.length > 0) {
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
     const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/usage_visits`, {
       method: 'POST',
       headers: {
-        apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+        apikey: key,
+        // the legacy service_role key is a JWT and also goes in Authorization; the newer
+        // sb_secret_… keys are not JWTs and must only be sent as apikey
+        ...(key.startsWith('eyJ') ? { Authorization: `Bearer ${key}` } : {}),
         'Content-Type': 'application/json',
         Prefer: 'return=minimal',
       },
