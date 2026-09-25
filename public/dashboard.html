@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>BAB · Pilota</title>
+<link rel="icon" href="/favicon.png" />
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f9f9f7;
+    --surface: #fcfcfb;
+    --ink: #0b0b0b;
+    --ink-2: #52514e;
+    --muted: #898781;
+    --grid: #e1e0d9;
+    --axis: #c3c2b7;
+    --border: rgba(11, 11, 11, 0.1);
+    --series: #2a78d6;
+    --band-low: #86b6ef;
+    --band-mid: #3987e5;
+    --band-high: #184f95;
+    --none: #c3c2b7;
+    --brand: #004b4e;
+    --brand-ink: #e0fd83;
+    --danger: #d03b3b;
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page: #0d0d0d;
+      --surface: #1a1a19;
+      --ink: #ffffff;
+      --ink-2: #c3c2b7;
+      --muted: #898781;
+      --grid: #2c2c2a;
+      --axis: #383835;
+      --border: rgba(255, 255, 255, 0.1);
+      --series: #3987e5;
+      --none: #52514e;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --ink: #ffffff;
+    --ink-2: #c3c2b7;
+    --muted: #898781;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.1);
+    --series: #3987e5;
+    --none: #52514e;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 15px/1.45 var(--font); }
+  header { background: var(--brand); color: #fff; padding: 18px 16px; }
+  header .wrap { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  header h1 { margin: 0; font-size: 20px; font-weight: 600; }
+  header h1 span { color: var(--brand-ink); }
+  header p { margin: 0; color: rgba(255, 255, 255, 0.75); font-size: 14px; }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  main { padding: 16px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: end; margin-bottom: 16px; }
+  label.field { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--ink-2); }
+  input, select, button {
+    font: inherit; color: var(--ink); background: var(--surface);
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; min-height: 40px;
+  }
+  button { cursor: pointer; font-weight: 600; }
+  button.primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+  button.link { background: none; border: none; color: var(--ink-2); text-decoration: underline; font-weight: 400; padding: 8px 4px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .kpi .label { font-size: 13px; color: var(--ink-2); }
+  .kpi .value { font-size: 30px; font-weight: 600; margin-top: 2px; }
+  .kpi .note { font-size: 12px; color: var(--muted); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr)); gap: 16px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; position: relative; min-width: 0; }
+  .card.wide { grid-column: 1 / -1; }
+  .card h2 { margin: 0; font-size: 16px; font-weight: 600; }
+  .card .sub { margin: 2px 0 12px; font-size: 13px; color: var(--ink-2); }
+  .chart svg { display: block; width: 100%; overflow: visible; }
+  .chart text { fill: var(--muted); font: 11px var(--font); font-variant-numeric: tabular-nums; }
+  .chart text.label { fill: var(--ink-2); font-size: 12px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 0 0 10px; font-size: 13px; color: var(--ink-2); padding: 0; list-style: none; }
+  .legend li { display: flex; align-items: center; gap: 6px; }
+  .legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+  .tooltip {
+    position: absolute; pointer-events: none; z-index: 5; min-width: 150px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12); padding: 8px 10px; font-size: 13px; display: none;
+  }
+  .tooltip .t-title { color: var(--ink-2); margin-bottom: 4px; }
+  .tooltip .t-row { display: flex; justify-content: space-between; gap: 16px; }
+  .tooltip .t-row b { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .tooltip .t-row span { color: var(--ink-2); }
+  .hit { fill: transparent; cursor: default; outline: none; }
+  .hit:focus-visible { stroke: var(--ink-2); stroke-width: 1; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 7px 8px; text-align: right; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--ink-2); font-weight: 600; }
+  td { font-variant-numeric: tabular-nums; }
+  .scroll { overflow-x: auto; }
+  details summary { cursor: pointer; font-weight: 600; }
+  .muted { color: var(--muted); }
+  .notice { font-size: 13px; color: var(--ink-2); margin-top: 16px; }
+  .empty { padding: 32px 0; text-align: center; color: var(--ink-2); }
+  .loading { opacity: 0.5; transition: opacity 0.2s; }
+  #login { max-width: 380px; margin: 64px auto; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  #login h2 { margin: 0 0 8px; font-size: 18px; }
+  #login form { display: flex; flex-direction: column; gap: 12px; }
+  .error { color: var(--danger); font-size: 13px; min-height: 18px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>BAB <span>·</span> Pilota</h1>
+    <p>Statistiche d'uso anonime dell'app</p>
+  </div>
+</header>
+
+<main class="wrap">
+  <section id="login">
+    <h2>Accedi</h2>
+    <p class="muted">Inserisci la password della dashboard.</p>
+    <form id="login-form">
+      <input id="password" type="password" autocomplete="current-password" placeholder="Password" required />
+      <button class="primary" type="submit">Entra</button>
+      <div class="error" id="login-error" role="alert"></div>
+    </form>
+  </section>
+
+  <section id="app" hidden>
+    <form class="filters" id="filters">
+      <label class="field">Inizio del pilota
+        <input type="date" id="start" required />
+      </label>
+      <label class="field">Telefoni
+        <select id="platform">
+          <option value="">Tutti</option>
+          <option value="ios">iPhone</option>
+          <option value="android">Android</option>
+        </select>
+      </label>
+      <button class="primary" type="submit">Aggiorna</button>
+      <button class="link" type="button" id="logout">Esci</button>
+    </form>
+
+    <div id="content">
+      <div class="kpis" id="kpis"></div>
+
+      <div class="grid">
+        <article class="card wide">
+          <h2>Atlete attive ogni giorno</h2>
+          <p class="sub">Quante atlete diverse hanno aperto l'app, per ognuno dei 35 giorni. Passa sopra una colonna per i dettagli.</p>
+          <div class="chart" id="chart-days"></div>
+        </article>
+
+        <article class="card">
+          <h2>Retention</h2>
+          <p class="sub">Quota delle atlete iniziate che ha usato l'app nella sua 1ª, 2ª, … 5ª settimana d'uso. Il churn è il resto.</p>
+          <div class="chart" id="chart-retention"></div>
+        </article>
+
+        <article class="card">
+          <h2>Quanti giorni a settimana</h2>
+          <p class="sub">Atlete per numero di giorni d'uso, settimana per settimana (dai riepiloghi settimanali).</p>
+          <ul class="legend" id="legend-spread"></ul>
+          <div class="chart" id="chart-spread"></div>
+        </article>
+
+        <article class="card wide">
+          <h2>Settimana per settimana</h2>
+          <p class="sub">Tutte le metriche settimanali del pilota.</p>
+          <div class="scroll" id="table-weeks"></div>
+        </article>
+
+        <article class="card">
+          <h2>Durata delle visite</h2>
+          <p class="sub">Aperture per durata e quota che termina con un check-in.</p>
+          <div class="chart" id="chart-lengths"></div>
+        </article>
+
+        <article class="card">
+          <h2>Dati giornalieri</h2>
+          <p class="sub">La tabella completa, giorno per giorno.</p>
+          <details>
+            <summary>Mostra la tabella</summary>
+            <div class="scroll" id="table-days"></div>
+          </details>
+        </article>
+      </div>
+
+      <p class="notice">
+        <b>—</b> = dato nascosto perché riguarda meno di 5 atlete: con una sola squadra permetterebbe di risalire al comportamento di una persona.
+        Nessun dato identifica un'atleta o il suo telefono; il contenuto dei check-in non lascia mai il telefono.
+        <span id="last-update"></span>
+      </p>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  'use strict'
+  const KEY = 'bab-dashboard-password'
+  const store = {
+    get: () => { try { return sessionStorage.getItem(KEY) } catch { return null } },
+    set: (v) => { try { sessionStorage.setItem(KEY, v) } catch {} },
+    clear: () => { try { sessionStorage.removeItem(KEY) } catch {} },
+  }
+  const $ = (id) => document.getElementById(id)
+  const SVG = 'http://www.w3.org/2000/svg'
+  const svgEl = (name, attrs = {}, parent) => {
+    const el = document.createElementNS(SVG, name)
+    for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v)
+    if (parent) parent.appendChild(el)
+    return el
+  }
+  const el = (name, attrs = {}, text) => {
+    const e = document.createElement(name)
+    for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v)
+    if (text !== undefined) e.textContent = text
+    return e
+  }
+  const fmt = (v, suffix = '') => (v === null || v === undefined ? '—' : `${String(v).replace('.', ',')}${suffix}`)
+  const dateIt = (day, opts = { day: 'numeric', month: 'short' }) =>
+    new Date(`${day}T12:00:00`).toLocaleDateString('it-IT', opts)
+  const weekdayIt = (day) => new Date(`${day}T12:00:00`).toLocaleDateString('it-IT', { weekday: 'short' })
+
+  let password = store.get()
+  let data = null
+
+  // ── tooltip ───────────────────────────────────────────────────────────────────────────
+  const tooltipFor = (card) => {
+    let tip = card.querySelector('.tooltip')
+    if (!tip) { tip = el('div', { class: 'tooltip', role: 'status' }); card.appendChild(tip) }
+    return tip
+  }
+  const showTip = (card, target, title, rows) => {
+    const tip = tooltipFor(card)
+    tip.replaceChildren(el('div', { class: 't-title' }, title))
+    for (const [label, value] of rows) {
+      const row = el('div', { class: 't-row' })
+      row.append(el('b', {}, value), el('span', {}, label))
+      tip.appendChild(row)
+    }
+    tip.style.display = 'block'
+    const c = card.getBoundingClientRect()
+    const t = target.getBoundingClientRect()
+    let left = t.left + t.width / 2 - c.left - tip.offsetWidth / 2
+    left = Math.max(8, Math.min(left, c.width - tip.offsetWidth - 8))
+    let top = t.top - c.top - tip.offsetHeight - 8
+    if (top < 8) top = t.bottom - c.top + 8
+    tip.style.left = `${left}px`
+    tip.style.top = `${top}px`
+  }
+  const hideTip = (card) => { const tip = card.querySelector('.tooltip'); if (tip) tip.style.display = 'none' }
+  const hover = (node, card, title, rows) => {
+    const show = () => showTip(card, node, title, rows)
+    node.addEventListener('pointerenter', show)
+    node.addEventListener('focus', show)
+    node.addEventListener('pointerleave', () => hideTip(card))
+    node.addEventListener('blur', () => hideTip(card))
+  }
+
+  // ── chart helpers ─────────────────────────────────────────────────────────────────────
+  const niceMax = (max) => {
+    if (max <= 5) return 5
+    const step = Math.pow(10, Math.floor(Math.log10(max)))
+    for (const m of [1, 2, 2.5, 5, 10]) if (m * step >= max) return m * step
+    return 10 * step
+  }
+  /** a column with a 4px rounded top and a square base */
+  const columnPath = (x, y, w, h) => {
+    const r = Math.min(4, h, w / 2)
+    return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`
+  }
+  const frame = (container, height, yMax, yTicks, fmtTick, margin) => {
+    container.replaceChildren()
+    const width = Math.max(container.clientWidth, 280)
+    const svg = svgEl('svg', { viewBox: `0 0 ${width} ${height}`, height, role: 'img' }, container)
+    const plot = { left: margin.left, right: width - margin.right, top: margin.top, bottom: height - margin.bottom }
+    const y = (v) => plot.bottom - (v / yMax) * (plot.bottom - plot.top)
+    for (let i = 0; i <= yTicks; i++) {
+      const v = (yMax / yTicks) * i
+      svgEl('line', { x1: plot.left, x2: plot.right, y1: y(v), y2: y(v), stroke: i === 0 ? 'var(--axis)' : 'var(--grid)', 'stroke-width': 1 }, svg)
+      const t = svgEl('text', { x: plot.left - 6, y: y(v) + 4, 'text-anchor': 'end' }, svg)
+      t.textContent = fmtTick(v)
+    }
+    return { svg, plot, y, width }
+  }
+
+  const drawDays = () => {
+    const container = $('chart-days')
+    const card = container.closest('.card')
+    const days = data.days
+    const values = days.map((d) => d.activeUsers ?? 0)
+    const yMax = niceMax(Math.max(...values, 1))
+    const { svg, plot, y } = frame(container, 240, yMax, 4, (v) => Math.round(v), { left: 32, right: 8, top: 10, bottom: 24 })
+    const band = (plot.right - plot.left) / days.length
+    const w = Math.min(24, band * 0.7)
+    days.forEach((d, i) => {
+      const cx = plot.left + band * i + band / 2
+      if (i % 7 === 0) {
+        // one label per pilot week, centred under its seven days; the exact date is in the tooltip
+        if (i > 0) svgEl('line', { x1: plot.left + band * i, x2: plot.left + band * i, y1: plot.top, y2: plot.bottom, stroke: 'var(--grid)' }, svg)
+        const t = svgEl('text', { x: plot.left + band * (i + 3.5), y: plot.bottom + 16, 'text-anchor': 'middle', class: 'label' }, svg)
+        t.textContent = band * 7 > 90 ? `Sett. ${d.pilotWeek} · ${dateIt(d.day)}` : `Sett. ${d.pilotWeek}`
+      }
+      if (d.activeUsers !== null && d.activeUsers > 0) {
+        svgEl('path', { d: columnPath(cx - w / 2, y(d.activeUsers), w, plot.bottom - y(d.activeUsers)), fill: 'var(--series)' }, svg)
+      } else if (d.openings > 0) {
+        // some use, but fewer than 5 athletes: a flat marker, the value stays hidden
+        svgEl('rect', { x: cx - w / 2, y: plot.bottom - 2, width: w, height: 2, fill: 'var(--none)' }, svg)
+      }
+      const hit = svgEl('rect', { x: plot.left + band * i, y: plot.top, width: band, height: plot.bottom - plot.top, class: 'hit', tabindex: 0 }, svg)
+      hover(hit, card, `${weekdayIt(d.day)} ${dateIt(d.day, { day: 'numeric', month: 'long' })}`, [
+        ['atlete attive', fmt(d.activeUsers)],
+        ['aperture', fmt(d.openings)],
+        ['check-in', fmt(d.checkins)],
+        ['aperture dal promemoria', fmt(d.openingsFromReminder)],
+        ['minuti per apertura', fmt(d.minutesPerOpening)],
+      ])
+    })
+  }
+
+  const drawRetention = () => {
+    const container = $('chart-retention')
+    const card = container.closest('.card')
+    const r = data.retention
+    if (r.every((p) => p.retentionPct === null)) {
+      container.replaceChildren(el('div', { class: 'empty' }, 'Servono almeno 5 atlete iniziate.'))
+      return
+    }
+    const { svg, plot, y } = frame(container, 220, 100, 4, (v) => `${v}%`, { left: 40, right: 44, top: 12, bottom: 28 })
+    const x = (i) => plot.left + ((plot.right - plot.left) * i) / (r.length - 1)
+    const points = r.map((p, i) => ({ ...p, px: x(i), py: p.retentionPct === null ? null : y(p.retentionPct) }))
+    r.forEach((p, i) => {
+      const t = svgEl('text', { x: x(i), y: plot.bottom + 16, 'text-anchor': 'middle' }, svg)
+      t.textContent = `${p.lifeWeek}ª sett.`
+    })
+    const drawn = points.filter((p) => p.py !== null)
+    svgEl('path', {
+      d: drawn.map((p, i) => `${i ? 'L' : 'M'}${p.px},${p.py}`).join(''),
+      fill: 'none', stroke: 'var(--series)', 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round',
+    }, svg)
+    for (const p of drawn) {
+      svgEl('circle', { cx: p.px, cy: p.py, r: 6, fill: 'var(--surface)' }, svg)
+      svgEl('circle', { cx: p.px, cy: p.py, r: 4, fill: 'var(--series)' }, svg)
+    }
+    const last = drawn[drawn.length - 1]
+    const end = svgEl('text', { x: last.px + 10, y: last.py + 4, class: 'label' }, svg)
+    end.textContent = `${last.retentionPct}%`
+    points.forEach((p, i) => {
+      const hit = svgEl('rect', { x: p.px - 20, y: plot.top, width: 40, height: plot.bottom - plot.top, class: 'hit', tabindex: 0 }, svg)
+      hover(hit, card, `${p.lifeWeek}ª settimana d'uso`, [
+        ['ancora attive', fmt(p.retentionPct, '%')],
+        ['churn', fmt(p.churnPct, '%')],
+        ['atlete attive', `${p.stillActive} su ${p.started}`],
+      ])
+    })
+  }
+
+  const SPREAD = [
+    { key: 'days5to7', label: '5–7 giorni', color: 'var(--band-high)' },
+    { key: 'days3to4', label: '3–4 giorni', color: 'var(--band-mid)' },
+    { key: 'days1to2', label: '1–2 giorni', color: 'var(--band-low)' },
+    { key: 'notReported', label: 'Hanno smesso / non ancora riportato', color: 'var(--none)' },
+  ]
+  const drawSpread = () => {
+    const legend = $('legend-spread')
+    legend.replaceChildren(...SPREAD.map((s) => {
+      const li = el('li'); const i = el('i'); i.style.background = s.color
+      li.append(i, document.createTextNode(s.label)); return li
+    }))
+    const container = $('chart-spread')
+    const card = container.closest('.card')
+    const weeks = data.spread
+    const totals = weeks.map((w) => SPREAD.reduce((sum, s) => sum + (w[s.key] ?? 0), 0))
+    const yMax = niceMax(Math.max(...totals, 1))
+    const { svg, plot, y } = frame(container, 220, yMax, 4, (v) => Math.round(v), { left: 32, right: 8, top: 10, bottom: 28 })
+    const band = (plot.right - plot.left) / weeks.length
+    const w = Math.min(24, band * 0.6)
+    weeks.forEach((wk, i) => {
+      const cx = plot.left + band * i + band / 2
+      const t = svgEl('text', { x: cx, y: plot.bottom + 16, 'text-anchor': 'middle' }, svg)
+      t.textContent = `Sett. ${wk.pilotWeek}`
+      const segments = SPREAD.filter((s) => (wk[s.key] ?? 0) > 0)
+      let base = 0
+      segments.forEach((s, j) => {
+        const v = wk[s.key]
+        const top = y(base + v)
+        const bottom = y(base) - (j > 0 ? 2 : 0) // 2px surface gap between segments
+        const h = Math.max(bottom - top, 1)
+        const isTop = j === segments.length - 1
+        svgEl('path', { d: isTop ? columnPath(cx - w / 2, top, w, h) : `M${cx - w / 2},${top}h${w}v${h}h${-w}Z`, fill: s.color }, svg)
+        base += v
+      })
+      if (wk.days1to2 === null && wk.notReported === null) {
+        const t2 = svgEl('text', { x: cx, y: plot.bottom - 6, 'text-anchor': 'middle' }, svg)
+        t2.textContent = '—'
+      }
+      const hit = svgEl('rect', { x: plot.left + band * i, y: plot.top, width: band, height: plot.bottom - plot.top, class: 'hit', tabindex: 0 }, svg)
+      hover(hit, card, `Settimana ${wk.pilotWeek}`, [
+        ...SPREAD.map((s) => [s.label.toLowerCase(), fmt(wk[s.key])]),
+        ['riepiloghi ricevuti', fmt(wk.reported)],
+      ])
+    })
+  }
+
+  const drawLengths = () => {
+    const container = $('chart-lengths')
+    const card = container.closest('.card')
+    container.replaceChildren()
+    const rows = data.lengths
+    const max = Math.max(...rows.map((r) => r.openings), 1)
+    const width = Math.max(container.clientWidth, 280)
+    const rowH = 40
+    const labelW = 64
+    const svg = svgEl('svg', { viewBox: `0 0 ${width} ${rows.length * rowH}`, height: rows.length * rowH, role: 'img' }, container)
+    rows.forEach((r, i) => {
+      const yMid = i * rowH + rowH / 2
+      const t = svgEl('text', { x: 0, y: yMid + 4, class: 'label' }, svg)
+      t.textContent = r.label
+      const barMax = width - labelW - 150
+      const len = Math.max((r.openings / max) * barMax, r.openings > 0 ? 2 : 0)
+      if (len > 0) {
+        const x = labelW, h = 20, yTop = yMid - h / 2, rr = Math.min(4, len)
+        svgEl('path', { d: `M${x},${yTop}H${x + len - rr}Q${x + len},${yTop} ${x + len},${yTop + rr}V${yTop + h - rr}Q${x + len},${yTop + h} ${x + len - rr},${yTop + h}H${x}Z`, fill: 'var(--series)' }, svg)
+      }
+      const v = svgEl('text', { x: labelW + len + 8, y: yMid + 4, class: 'label' }, svg)
+      v.textContent = `${r.openings} · ${fmt(r.withCheckInPct, '%')} con check-in`
+      const hit = svgEl('rect', { x: 0, y: i * rowH, width, height: rowH, class: 'hit', tabindex: 0 }, svg)
+      hover(hit, card, `Visite ${r.label}`, [
+        ['aperture', fmt(r.openings)],
+        ['con check-in', fmt(r.withCheckIn)],
+        ['quota con check-in', fmt(r.withCheckInPct, '%')],
+      ])
+    })
+  }
+
+  const table = (container, headers, rows) => {
+    const t = el('table')
+    const head = el('tr')
+    headers.forEach((h) => head.appendChild(el('th', { scope: 'col' }, h)))
+    t.appendChild(el('thead')).appendChild(head)
+    const body = el('tbody')
+    rows.forEach((cells) => {
+      const tr = el('tr')
+      cells.forEach((c) => tr.appendChild(el('td', {}, c)))
+      body.appendChild(tr)
+    })
+    t.appendChild(body)
+    container.replaceChildren(t)
+  }
+
+  const kpi = (label, value, note) => {
+    const box = el('div', { class: 'kpi' })
+    box.append(el('div', { class: 'label' }, label), el('div', { class: 'value' }, value))
+    if (note) box.appendChild(el('div', { class: 'note' }, note))
+    return box
+  }
+
+  const render = () => {
+    if (!data) return
+    const s = data.summary
+    $('kpis').replaceChildren(
+      kpi('Atlete iniziate', fmt(s.started), 'hanno aperto l\'app almeno una volta'),
+      kpi('Attive nell\'ultima settimana', fmt(s.latestWeekActive), s.latestWeek ? `settimana ${s.latestWeek} del pilota` : 'nessun dato ancora'),
+      kpi('Check-in fatti', fmt(s.totalCheckins), `su ${s.totalOpenings} aperture`),
+      kpi('Aperture dal promemoria', fmt(s.openingsFromReminderPct, '%'), 'notifica delle 19:00'),
+      kpi('Ancora attive', fmt(s.latestRetentionPct, '%'), s.latestWeek ? `nella ${s.latestWeek}ª settimana d'uso` : ''),
+    )
+    drawDays()
+    drawRetention()
+    drawSpread()
+    drawLengths()
+    table($('table-weeks'),
+      ['Settimana', 'Atlete attive', 'Aperture', 'Aperture / atleta', 'Giorni d\'uso / atleta', 'Check-in', 'Check-in / atleta', 'Da promemoria', 'Promemoria attivo', 'Min / apertura', 'Min / atleta'],
+      data.weeks.map((w) => [
+        `${w.pilotWeek} (${dateIt(w.from)}–${dateIt(w.to)})`, fmt(w.activeUsers), fmt(w.openings), fmt(w.openingsPerUser),
+        fmt(w.daysUsedPerUser), fmt(w.checkins), fmt(w.checkinsPerUser), fmt(w.openingsFromReminderPct, '%'),
+        fmt(w.reminderOnPct, '%'), fmt(w.minutesPerOpening), fmt(w.minutesPerUser),
+      ]))
+    table($('table-days'),
+      ['Giorno', 'Atlete attive', 'Aperture', 'Check-in', 'Da promemoria', 'Min / apertura'],
+      data.days.map((d) => [
+        `${weekdayIt(d.day)} ${dateIt(d.day)}`, fmt(d.activeUsers), fmt(d.openings), fmt(d.checkins),
+        fmt(d.openingsFromReminder), fmt(d.minutesPerOpening),
+      ]))
+    $('last-update').textContent = s.lastDataDay ? `Ultimo dato ricevuto: ${dateIt(s.lastDataDay, { day: 'numeric', month: 'long' })}.` : 'Nessun dato ricevuto per questo periodo.'
+  }
+
+  // ── data ──────────────────────────────────────────────────────────────────────────────
+  const load = async () => {
+    const params = new URLSearchParams()
+    if ($('start').value) params.set('start', $('start').value)
+    if ($('platform').value) params.set('platform', $('platform').value)
+    $('content').classList.add('loading')
+    try {
+      const response = await fetch(`/api/metrics?${params}`, { headers: { Authorization: `Bearer ${password}` }, cache: 'no-store' })
+      if (response.status === 401) { logout('Password non corretta.'); return }
+      const body = await response.json()
+      if (response.status === 400 && body.error === 'start_missing') {
+        showApp()
+        $('last-update').textContent = 'Indica la data di inizio del pilota e premi Aggiorna.'
+        return
+      }
+      if (!response.ok) throw new Error(body.error || response.status)
+      data = body
+      if (!$('start').value) $('start').value = data.start
+      showApp()
+      render()
+    } catch (error) {
+      showApp()
+      $('last-update').textContent = `Non riesco a leggere i dati (${error.message}). Riprova tra poco.`
+    } finally {
+      $('content').classList.remove('loading')
+    }
+  }
+
+  const showApp = () => { $('login').hidden = true; $('app').hidden = false }
+  const logout = (message = '') => {
+    store.clear(); password = null; data = null
+    $('app').hidden = true; $('login').hidden = false
+    $('login-error').textContent = message
+    $('password').value = ''
+    $('password').focus()
+  }
+
+  $('login-form').addEventListener('submit', (e) => {
+    e.preventDefault()
+    password = $('password').value
+    store.set(password)
+    $('login-error').textContent = ''
+    load()
+  })
+  $('filters').addEventListener('submit', (e) => { e.preventDefault(); load() })
+  $('platform').addEventListener('change', load)
+  $('logout').addEventListener('click', () => logout())
+  let resizeTimer
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(render, 150) })
+
+  if (password) load()
+})()
+</script>
+</body>
+</html>
