@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="it">
+<html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex, nofollow" />
-<title>BAB · Pilota</title>
+<title>BAB · Pilot</title>
 <link rel="icon" href="/favicon.png" />
 <style>
   :root {
@@ -121,36 +121,36 @@
 <body>
 <header>
   <div class="wrap">
-    <h1>BAB <span>·</span> Pilota</h1>
-    <p>Statistiche d'uso anonime dell'app</p>
+    <h1>BAB <span>·</span> Pilot</h1>
+    <p>Anonymous app usage statistics</p>
   </div>
 </header>
 
 <main class="wrap">
   <section id="login">
-    <h2>Accedi</h2>
-    <p class="muted">Inserisci la password della dashboard.</p>
+    <h2>Sign in</h2>
+    <p class="muted">Enter the dashboard password.</p>
     <form id="login-form">
       <input id="password" type="password" autocomplete="current-password" placeholder="Password" required />
-      <button class="primary" type="submit">Entra</button>
+      <button class="primary" type="submit">Sign in</button>
       <div class="error" id="login-error" role="alert"></div>
     </form>
   </section>
 
   <section id="app" hidden>
     <form class="filters" id="filters">
-      <label class="field">Inizio del pilota
+      <label class="field">Pilot start
         <input type="date" id="start" required />
       </label>
-      <label class="field">Telefoni
+      <label class="field">Phones
         <select id="platform">
-          <option value="">Tutti</option>
+          <option value="">All</option>
           <option value="ios">iPhone</option>
           <option value="android">Android</option>
         </select>
       </label>
-      <button class="primary" type="submit">Aggiorna</button>
-      <button class="link" type="button" id="logout">Esci</button>
+      <button class="primary" type="submit">Update</button>
+      <button class="link" type="button" id="logout">Sign out</button>
     </form>
 
     <div id="content">
@@ -158,49 +158,49 @@
 
       <div class="grid">
         <article class="card wide">
-          <h2>Atlete attive ogni giorno</h2>
-          <p class="sub">Quante atlete diverse hanno aperto l'app, per ognuno dei 35 giorni. Passa sopra una colonna per i dettagli.</p>
+          <h2>Active athletes per day</h2>
+          <p class="sub">How many different athletes opened the app on each of the 35 days. Hover over a column for details.</p>
           <div class="chart" id="chart-days"></div>
         </article>
 
         <article class="card">
           <h2>Retention</h2>
-          <p class="sub">Quota delle atlete iniziate che ha usato l'app nella sua 1ª, 2ª, … 5ª settimana d'uso. Il churn è il resto.</p>
+          <p class="sub">Share of the athletes who started that used the app in their 1st, 2nd, … 5th week of use. Churn is the rest.</p>
           <div class="chart" id="chart-retention"></div>
         </article>
 
         <article class="card">
-          <h2>Quanti giorni a settimana</h2>
-          <p class="sub">Atlete per numero di giorni d'uso, settimana per settimana (dai riepiloghi settimanali).</p>
+          <h2>Days of use per week</h2>
+          <p class="sub">Athletes by number of days they used the app, week by week (from the weekly summaries).</p>
           <ul class="legend" id="legend-spread"></ul>
           <div class="chart" id="chart-spread"></div>
         </article>
 
         <article class="card wide">
-          <h2>Settimana per settimana</h2>
-          <p class="sub">Tutte le metriche settimanali del pilota.</p>
+          <h2>Week by week</h2>
+          <p class="sub">All weekly pilot metrics.</p>
           <div class="scroll" id="table-weeks"></div>
         </article>
 
         <article class="card">
-          <h2>Durata delle visite</h2>
-          <p class="sub">Aperture per durata e quota che termina con un check-in.</p>
+          <h2>Visit length</h2>
+          <p class="sub">Openings by length, and the share that ends with a check-in.</p>
           <div class="chart" id="chart-lengths"></div>
         </article>
 
         <article class="card">
-          <h2>Dati giornalieri</h2>
-          <p class="sub">La tabella completa, giorno per giorno.</p>
+          <h2>Daily data</h2>
+          <p class="sub">The full table, day by day.</p>
           <details>
-            <summary>Mostra la tabella</summary>
+            <summary>Show the table</summary>
             <div class="scroll" id="table-days"></div>
           </details>
         </article>
       </div>
 
       <p class="notice">
-        <b>—</b> = dato nascosto perché riguarda meno di 5 atlete: con una sola squadra permetterebbe di risalire al comportamento di una persona.
-        Nessun dato identifica un'atleta o il suo telefono; il contenuto dei check-in non lascia mai il telefono.
+        <b>—</b> = hidden because it covers fewer than 5 athletes: with a single team it could reveal one person's behaviour.
+        No data identifies an athlete or her phone; the content of check-ins never leaves the phone.
         <span id="last-update"></span>
       </p>
     </div>
@@ -230,10 +230,10 @@
     if (text !== undefined) e.textContent = text
     return e
   }
-  const fmt = (v, suffix = '') => (v === null || v === undefined ? '—' : `${String(v).replace('.', ',')}${suffix}`)
+  const fmt = (v, suffix = '') => (v === null || v === undefined ? '—' : `${v}${suffix}`)
   const dateIt = (day, opts = { day: 'numeric', month: 'short' }) =>
-    new Date(`${day}T12:00:00`).toLocaleDateString('it-IT', opts)
-  const weekdayIt = (day) => new Date(`${day}T12:00:00`).toLocaleDateString('it-IT', { weekday: 'short' })
+    new Date(`${day}T12:00:00`).toLocaleDateString('en-GB', opts)
+  const weekdayIt = (day) => new Date(`${day}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'short' })
 
   let password = store.get()
   let data = null
@@ -249,7 +249,7 @@
     tip.replaceChildren(el('div', { class: 't-title' }, title))
     for (const [label, value] of rows) {
       const row = el('div', { class: 't-row' })
-      row.append(el('b', {}, value), el('span', {}, label))
+      row.append(el('span', {}, label), el('b', {}, value))
       tip.appendChild(row)
     }
     tip.style.display = 'block'
@@ -313,7 +313,7 @@
         // one label per pilot week, centred under its seven days; the exact date is in the tooltip
         if (i > 0) svgEl('line', { x1: plot.left + band * i, x2: plot.left + band * i, y1: plot.top, y2: plot.bottom, stroke: 'var(--grid)' }, svg)
         const t = svgEl('text', { x: plot.left + band * (i + 3.5), y: plot.bottom + 16, 'text-anchor': 'middle', class: 'label' }, svg)
-        t.textContent = band * 7 > 90 ? `Sett. ${d.pilotWeek} · ${dateIt(d.day)}` : `Sett. ${d.pilotWeek}`
+        t.textContent = band * 7 > 90 ? `Week ${d.pilotWeek} · ${dateIt(d.day)}` : `Wk ${d.pilotWeek}`
       }
       if (d.activeUsers !== null && d.activeUsers > 0) {
         svgEl('path', { d: columnPath(cx - w / 2, y(d.activeUsers), w, plot.bottom - y(d.activeUsers)), fill: 'var(--series)' }, svg)
@@ -323,11 +323,11 @@
       }
       const hit = svgEl('rect', { x: plot.left + band * i, y: plot.top, width: band, height: plot.bottom - plot.top, class: 'hit', tabindex: 0 }, svg)
       hover(hit, card, `${weekdayIt(d.day)} ${dateIt(d.day, { day: 'numeric', month: 'long' })}`, [
-        ['atlete attive', fmt(d.activeUsers)],
-        ['aperture', fmt(d.openings)],
-        ['check-in', fmt(d.checkins)],
-        ['aperture dal promemoria', fmt(d.openingsFromReminder)],
-        ['minuti per apertura', fmt(d.minutesPerOpening)],
+        ['active athletes', fmt(d.activeUsers)],
+        ['openings', fmt(d.openings)],
+        ['check-ins', fmt(d.checkins)],
+        ['openings from reminder', fmt(d.openingsFromReminder)],
+        ['minutes per opening', fmt(d.minutesPerOpening)],
       ])
     })
   }
@@ -337,7 +337,7 @@
     const card = container.closest('.card')
     const r = data.retention
     if (r.every((p) => p.retentionPct === null)) {
-      container.replaceChildren(el('div', { class: 'empty' }, 'Servono almeno 5 atlete iniziate.'))
+      container.replaceChildren(el('div', { class: 'empty' }, 'Needs at least 5 athletes who started.'))
       return
     }
     const { svg, plot, y } = frame(container, 220, 100, 4, (v) => `${v}%`, { left: 40, right: 44, top: 12, bottom: 28 })
@@ -345,7 +345,7 @@
     const points = r.map((p, i) => ({ ...p, px: x(i), py: p.retentionPct === null ? null : y(p.retentionPct) }))
     r.forEach((p, i) => {
       const t = svgEl('text', { x: x(i), y: plot.bottom + 16, 'text-anchor': 'middle' }, svg)
-      t.textContent = `${p.lifeWeek}ª sett.`
+      t.textContent = `Week ${p.lifeWeek}`
     })
     const drawn = points.filter((p) => p.py !== null)
     svgEl('path', {
@@ -361,19 +361,19 @@
     end.textContent = `${last.retentionPct}%`
     points.forEach((p, i) => {
       const hit = svgEl('rect', { x: p.px - 20, y: plot.top, width: 40, height: plot.bottom - plot.top, class: 'hit', tabindex: 0 }, svg)
-      hover(hit, card, `${p.lifeWeek}ª settimana d'uso`, [
-        ['ancora attive', fmt(p.retentionPct, '%')],
+      hover(hit, card, `Week ${p.lifeWeek} of use`, [
+        ['still active', fmt(p.retentionPct, '%')],
         ['churn', fmt(p.churnPct, '%')],
-        ['atlete attive', `${p.stillActive} su ${p.started}`],
+        ['active athletes', `${p.stillActive} of ${p.started}`],
       ])
     })
   }
 
   const SPREAD = [
-    { key: 'days5to7', label: '5–7 giorni', color: 'var(--band-high)' },
-    { key: 'days3to4', label: '3–4 giorni', color: 'var(--band-mid)' },
-    { key: 'days1to2', label: '1–2 giorni', color: 'var(--band-low)' },
-    { key: 'notReported', label: 'Hanno smesso / non ancora riportato', color: 'var(--none)' },
+    { key: 'days5to7', label: '5–7 days', color: 'var(--band-high)' },
+    { key: 'days3to4', label: '3–4 days', color: 'var(--band-mid)' },
+    { key: 'days1to2', label: '1–2 days', color: 'var(--band-low)' },
+    { key: 'notReported', label: 'Stopped / not yet reported', color: 'var(--none)' },
   ]
   const drawSpread = () => {
     const legend = $('legend-spread')
@@ -392,7 +392,7 @@
     weeks.forEach((wk, i) => {
       const cx = plot.left + band * i + band / 2
       const t = svgEl('text', { x: cx, y: plot.bottom + 16, 'text-anchor': 'middle' }, svg)
-      t.textContent = `Sett. ${wk.pilotWeek}`
+      t.textContent = `Week ${wk.pilotWeek}`
       const segments = SPREAD.filter((s) => (wk[s.key] ?? 0) > 0)
       let base = 0
       segments.forEach((s, j) => {
@@ -409,9 +409,9 @@
         t2.textContent = '—'
       }
       const hit = svgEl('rect', { x: plot.left + band * i, y: plot.top, width: band, height: plot.bottom - plot.top, class: 'hit', tabindex: 0 }, svg)
-      hover(hit, card, `Settimana ${wk.pilotWeek}`, [
+      hover(hit, card, `Week ${wk.pilotWeek}`, [
         ...SPREAD.map((s) => [s.label.toLowerCase(), fmt(wk[s.key])]),
-        ['riepiloghi ricevuti', fmt(wk.reported)],
+        ['summaries received', fmt(wk.reported)],
       ])
     })
   }
@@ -437,12 +437,12 @@
         svgEl('path', { d: `M${x},${yTop}H${x + len - rr}Q${x + len},${yTop} ${x + len},${yTop + rr}V${yTop + h - rr}Q${x + len},${yTop + h} ${x + len - rr},${yTop + h}H${x}Z`, fill: 'var(--series)' }, svg)
       }
       const v = svgEl('text', { x: labelW + len + 8, y: yMid + 4, class: 'label' }, svg)
-      v.textContent = `${r.openings} · ${fmt(r.withCheckInPct, '%')} con check-in`
+      v.textContent = `${r.openings} · ${fmt(r.withCheckInPct, '%')} with a check-in`
       const hit = svgEl('rect', { x: 0, y: i * rowH, width, height: rowH, class: 'hit', tabindex: 0 }, svg)
-      hover(hit, card, `Visite ${r.label}`, [
-        ['aperture', fmt(r.openings)],
-        ['con check-in', fmt(r.withCheckIn)],
-        ['quota con check-in', fmt(r.withCheckInPct, '%')],
+      hover(hit, card, `Visits ${r.label}`, [
+        ['openings', fmt(r.openings)],
+        ['with a check-in', fmt(r.withCheckIn)],
+        ['share with a check-in', fmt(r.withCheckInPct, '%')],
       ])
     })
   }
@@ -473,30 +473,30 @@
     if (!data) return
     const s = data.summary
     $('kpis').replaceChildren(
-      kpi('Atlete iniziate', fmt(s.started), 'hanno aperto l\'app almeno una volta'),
-      kpi('Attive nell\'ultima settimana', fmt(s.latestWeekActive), s.latestWeek ? `settimana ${s.latestWeek} del pilota` : 'nessun dato ancora'),
-      kpi('Check-in fatti', fmt(s.totalCheckins), `su ${s.totalOpenings} aperture`),
-      kpi('Aperture dal promemoria', fmt(s.openingsFromReminderPct, '%'), 'notifica delle 19:00'),
-      kpi('Ancora attive', fmt(s.latestRetentionPct, '%'), s.latestWeek ? `nella ${s.latestWeek}ª settimana d'uso` : ''),
+      kpi('Athletes started', fmt(s.started), 'opened the app at least once'),
+      kpi('Active last week', fmt(s.latestWeekActive), s.latestWeek ? `pilot week ${s.latestWeek}` : 'no data yet'),
+      kpi('Check-ins done', fmt(s.totalCheckins), `in ${s.totalOpenings} openings`),
+      kpi('Opened from reminder', fmt(s.openingsFromReminderPct, '%'), '7 pm notification'),
+      kpi('Still active', fmt(s.latestRetentionPct, '%'), s.latestWeek ? `in week ${s.latestWeek} of use` : ''),
     )
     drawDays()
     drawRetention()
     drawSpread()
     drawLengths()
     table($('table-weeks'),
-      ['Settimana', 'Atlete attive', 'Aperture', 'Aperture / atleta', 'Giorni d\'uso / atleta', 'Check-in', 'Check-in / atleta', 'Da promemoria', 'Promemoria attivo', 'Min / apertura', 'Min / atleta'],
+      ['Week', 'Active athletes', 'Openings', 'Openings / athlete', 'Days of use / athlete', 'Check-ins', 'Check-ins / athlete', 'From reminder', 'Reminder on', 'Min / opening', 'Min / athlete'],
       data.weeks.map((w) => [
         `${w.pilotWeek} (${dateIt(w.from)}–${dateIt(w.to)})`, fmt(w.activeUsers), fmt(w.openings), fmt(w.openingsPerUser),
         fmt(w.daysUsedPerUser), fmt(w.checkins), fmt(w.checkinsPerUser), fmt(w.openingsFromReminderPct, '%'),
         fmt(w.reminderOnPct, '%'), fmt(w.minutesPerOpening), fmt(w.minutesPerUser),
       ]))
     table($('table-days'),
-      ['Giorno', 'Atlete attive', 'Aperture', 'Check-in', 'Da promemoria', 'Min / apertura'],
+      ['Day', 'Active athletes', 'Openings', 'Check-ins', 'From reminder', 'Min / opening'],
       data.days.map((d) => [
         `${weekdayIt(d.day)} ${dateIt(d.day)}`, fmt(d.activeUsers), fmt(d.openings), fmt(d.checkins),
         fmt(d.openingsFromReminder), fmt(d.minutesPerOpening),
       ]))
-    $('last-update').textContent = s.lastDataDay ? `Ultimo dato ricevuto: ${dateIt(s.lastDataDay, { day: 'numeric', month: 'long' })}.` : 'Nessun dato ricevuto per questo periodo.'
+    $('last-update').textContent = s.lastDataDay ? `Last data received: ${dateIt(s.lastDataDay, { day: 'numeric', month: 'long' })}.` : 'No data received for this period.'
   }
 
   // ── data ──────────────────────────────────────────────────────────────────────────────
@@ -507,11 +507,11 @@
     $('content').classList.add('loading')
     try {
       const response = await fetch(`/api/metrics?${params}`, { headers: { Authorization: `Bearer ${password}` }, cache: 'no-store' })
-      if (response.status === 401) { logout('Password non corretta.'); return }
+      if (response.status === 401) { logout('Wrong password.'); return }
       const body = await response.json()
       if (response.status === 400 && body.error === 'start_missing') {
         showApp()
-        $('last-update').textContent = 'Indica la data di inizio del pilota e premi Aggiorna.'
+        $('last-update').textContent = 'Choose the pilot start date and press Update.'
         return
       }
       if (!response.ok) throw new Error(body.error || response.status)
@@ -521,7 +521,7 @@
       render()
     } catch (error) {
       showApp()
-      $('last-update').textContent = `Non riesco a leggere i dati (${error.message}). Riprova tra poco.`
+      $('last-update').textContent = `Could not load the data (${error.message}). Try again shortly.`
     } finally {
       $('content').classList.remove('loading')
     }
