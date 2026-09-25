@@ -15,7 +15,7 @@ import { listenForInstallPrompt } from './features/pwa/installPrompt'
 import { startUsageStats } from './features/usage-stats/usageStats'
 import { hydrateStorage } from './shared/lib/safeStorage'
 import { isNativeApp } from './shared/lib/platform'
-import { syncDailyReminder } from './features/reminder/dailyReminder'
+import { listenForReminderTaps, syncDailyReminder } from './features/reminder/dailyReminder'
 
 const isNative = isNativeApp()
 
@@ -32,6 +32,7 @@ const start = async () => {
     void navigator.serviceWorker.getRegistrations().then((all) => all.forEach((r) => void r.unregister()))
   }
   startUsageStats()
+  listenForReminderTaps()
 
   // The catalog has to be loaded before the first render, or the UI would flash untranslated.
   // If the chosen language's catalog can't be fetched (offline), open in the default one instead.

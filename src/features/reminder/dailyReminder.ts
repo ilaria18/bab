@@ -3,6 +3,7 @@ import { i18n } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { isNativeApp } from '@/shared/lib/platform'
 import { safeStorage } from '@/shared/lib/safeStorage'
+import { recordOpenedFromReminder, recordReminderActive } from '@/features/usage-stats/usageStats'
 
 /**
  * One notification a day, at a time the athlete can change in Settings.
@@ -39,6 +40,20 @@ export const saveReminderSettings = (settings: ReminderSettings): void =>
 /** Makes the phone's scheduled notification match the settings. Called at every start (so the text
  * follows the current language) and whenever the athlete changes the setting. */
 export const syncDailyReminder = async (settings = getReminderSettings()): Promise<ReminderStatus> => {
+  const status = await applyReminder(settings)
+  recordReminderActive(status === 'scheduled')
+  return status
+}
+
+/** Lets the usage statistics count the visits that started from a tap on the reminder. */
+export const listenForReminderTaps = (): void => {
+  if (!isNativeApp()) return
+  void LocalNotifications.addListener('localNotificationActionPerformed', ({ notification }) => {
+    if (notification.id === NOTIFICATION_ID) recordOpenedFromReminder()
+  })
+}
+
+const applyReminder = async (settings: ReminderSettings): Promise<ReminderStatus> => {
   if (!isNativeApp()) return 'unavailable'
   try {
     await LocalNotifications.cancel({ notifications: [{ id: NOTIFICATION_ID }] })

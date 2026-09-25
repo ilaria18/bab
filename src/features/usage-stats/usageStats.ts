@@ -14,12 +14,17 @@ import { safeStorage } from '@/shared/lib/safeStorage'
  * daily/weekly active users and weekly retention without ever being able to link two rows to
  * the same person.
  *
- * What the athlete records (words, body zones, intensity, notes) is never read here.
+ * Once a week the phone also sends one summary row: in how many days (as a band: 1-2, 3-4, 5-7)
+ * the app was used the week before. That shows how use is spread across the team ("4 athletes
+ * almost daily, 6 twice a week") without following anyone.
+ *
+ * What the athlete records (words, body zones, intensity, notes) is never read here — only how
+ * many check-ins were completed during a visit.
  * Nothing is collected or sent until setUsageConsent(true) has been called.
  */
 
 export type UsageEvent = {
-  v: 2
+  v: 3
   /** local calendar day of the visit, YYYY-MM-DD */
   day: string
   /** time the app was in the foreground, rounded to 10 s */
@@ -38,7 +43,28 @@ export type UsageEvent = {
   continued: boolean
   /** ios / android app, or web — to compare the two halves of a team */
   platform: AppPlatform
+  /** check-ins completed during this visit (how many, never what) */
+  checkins: number
+  /** the app was opened by tapping the daily reminder */
+  from_reminder: boolean
+  /** the daily reminder is switched on and the phone allows notifications */
+  reminder_on: boolean
 }
+
+export type ActiveDaysBand = '1-2' | '3-4' | '5-7'
+
+/** Sent once, at the first visit of a new week, about the last week the app was used. */
+export type WeekSummary = {
+  v: 3
+  kind: 'week'
+  /** ISO week the summary is about, e.g. 2026-W40 */
+  week: string
+  /** in how many different days of that week the app was used */
+  active_days: ActiveDaysBand
+  platform: AppPlatform
+}
+
+export type UsageRow = UsageEvent | WeekSummary
 
 type State = {
   consent: boolean
@@ -47,7 +73,10 @@ type State = {
   lastWeek: string | null
   lastLifeWeek: number | null
   lastHiddenAt: number | null
-  queue: UsageEvent[]
+  /** calendar week being counted for the weekly summary, and the days of it with a visit */
+  activeWeek: string | null
+  activeDays: string[]
+  queue: UsageRow[]
 }
 
 const STORAGE_KEY = 'bab.usage-stats.v1'
@@ -64,6 +93,8 @@ const emptyState = (): State => ({
   lastWeek: null,
   lastLifeWeek: null,
   lastHiddenAt: null,
+  activeWeek: null,
+  activeDays: [],
   queue: [],
 })
 
@@ -81,7 +112,32 @@ const saveState = (state: State) => safeStorage.setItem(STORAGE_KEY, JSON.string
 export const isoWeekKey = (date: Date): string =>
   `${getISOWeekYear(date)}-W${String(getISOWeek(date)).padStart(2, '0')}`
 
+export const activeDaysBand = (days: number): ActiveDaysBand => (days <= 2 ? '1-2' : days <= 4 ? '3-4' : '5-7')
+
 export const getUsageConsent = (): boolean => loadState().consent
+
+// What happens during the current visit, reported when it ends.
+let visitCheckins = 0
+let visitFromReminder = false
+/** a reminder tap can arrive just before the app reports it is in the foreground */
+let pendingFromReminder = false
+let reminderOn = false
+
+/** Call when a new check-in has been saved. */
+export const recordCheckIn = (): void => {
+  visitCheckins += 1
+}
+
+/** Call when the app was opened by tapping the daily reminder. */
+export const recordOpenedFromReminder = (): void => {
+  visitFromReminder = true
+  pendingFromReminder = true
+}
+
+/** Call whenever the reminder is (re)scheduled or switched off. */
+export const recordReminderActive = (active: boolean): void => {
+  reminderOn = active
+}
 
 /** Turning consent off also wipes every counter and unsent row kept on the device. */
 export const setUsageConsent = (consent: boolean): void => {
@@ -93,11 +149,11 @@ type Options = {
   platform?: AppPlatform
   native?: boolean
   now?: () => number
-  send?: (endpoint: string, events: UsageEvent[]) => Promise<boolean>
+  send?: (endpoint: string, events: UsageRow[]) => Promise<boolean>
   doc?: Document
 }
 
-const defaultSend = async (endpoint: string, events: UsageEvent[]): Promise<boolean> => {
+const defaultSend = async (endpoint: string, events: UsageRow[]): Promise<boolean> => {
   try {
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -148,9 +204,14 @@ export const startUsageStats = ({
     const endedAt = now()
     const duration = endedAt - visibleSince
     visibleSince = null
+    const checkins = visitCheckins
+    const fromReminder = visitFromReminder
+    visitCheckins = 0
+    visitFromReminder = false
+    pendingFromReminder = false
     const state = loadState()
     if (!state.consent) return
-    if (duration < MIN_VISIT_MS && !continued) return
+    if (duration < MIN_VISIT_MS && !continued && checkins === 0) return
 
     const date = new Date(endedAt)
     const day = toDateKey(date)
@@ -159,7 +220,7 @@ export const startUsageStats = ({
     const lifeWeek = Math.floor(differenceInCalendarDays(date, parseISO(firstDay)) / 7)
 
     const event: UsageEvent = {
-      v: 2,
+      v: 3,
       day,
       seconds: Math.round(duration / 10_000) * 10,
       cohort_week: isoWeekKey(parseISO(firstDay)),
@@ -170,7 +231,18 @@ export const startUsageStats = ({
       first_of_life_week: !continued && state.lastLifeWeek !== lifeWeek,
       continued,
       platform,
+      checkins,
+      from_reminder: fromReminder,
+      reminder_on: reminderOn,
     }
+
+    // a new week has started: report how many days the previous active week had
+    const summaries: WeekSummary[] =
+      state.activeWeek !== null && state.activeWeek !== week && state.activeDays.length > 0
+        ? [{ v: 3, kind: 'week', week: state.activeWeek, active_days: activeDaysBand(state.activeDays.length), platform }]
+        : []
+    const activeDays =
+      state.activeWeek === week ? Array.from(new Set([...state.activeDays, day])) : [day]
 
     saveState({
       ...state,
@@ -179,7 +251,9 @@ export const startUsageStats = ({
       lastWeek: week,
       lastLifeWeek: lifeWeek,
       lastHiddenAt: endedAt,
-      queue: [...state.queue, event].slice(-MAX_QUEUE),
+      activeWeek: week,
+      activeDays,
+      queue: [...state.queue, ...summaries, event].slice(-MAX_QUEUE),
     })
     void flush()
   }
@@ -190,6 +264,8 @@ export const startUsageStats = ({
     const { lastHiddenAt } = loadState()
     continued = lastHiddenAt !== null && startedAt - lastHiddenAt < RESUME_WINDOW_MS
     visibleSince = startedAt
+    visitCheckins = 0
+    visitFromReminder = pendingFromReminder
     void flush() // rows that could not be sent last time (offline)
   }
 

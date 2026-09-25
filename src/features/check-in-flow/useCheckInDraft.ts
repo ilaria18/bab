@@ -10,6 +10,7 @@ import {
   type Trigger,
 } from '@/entities/check-in/types'
 import { checkInRepository } from '@/entities/check-in/checkInRepository'
+import { recordCheckIn } from '@/features/usage-stats/usageStats'
 
 /** Holds the in-progress answers for one check-in flow and commits them
  * to the repository once both are picked. Nothing here is saved until commit().
@@ -50,7 +51,10 @@ export const useCheckInDraft = (word: WordCard, date?: string, editing?: CheckIn
         triggers: triggers.length > 0 ? triggers : undefined,
         note: note.trim() || undefined,
       }
-      return editing ? await checkInRepository.update(editing.id, payload) : await checkInRepository.save(payload, date)
+      if (editing) return await checkInRepository.update(editing.id, payload)
+      const saved = await checkInRepository.save(payload, date)
+      recordCheckIn()
+      return saved
     } finally {
       setSaving(false)
     }
