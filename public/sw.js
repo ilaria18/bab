@@ -81,6 +81,9 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url)
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return
 
+  // the pilot dashboard and the API are separate pages, never the app's shell
+  if (url.origin === self.location.origin && (url.pathname.startsWith('/dashboard') || url.pathname.startsWith('/api/'))) return
+
   if (request.mode === 'navigate') {
     event.respondWith(handleNavigation(request, event))
   } else if (url.origin === self.location.origin || url.hostname.endsWith('fonts.googleapis.com') || url.hostname.endsWith('fonts.gstatic.com')) {
