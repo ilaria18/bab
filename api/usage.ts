@@ -13,6 +13,7 @@
  *   USAGE_ALLOWED_ORIGINS         optional, extra origins allowed to send (comma separated);
  *                                 the iOS and Android app origins are always allowed
  */
+/// <reference types="node" />
 
 /** where the Capacitor app runs from: iOS WebView, Android WebView */
 const APP_ORIGINS = ['capacitor://localhost', 'https://localhost']
