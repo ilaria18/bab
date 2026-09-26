@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
-import { ToggleSwitch } from '@/shared/ui'
-import { isNativeApp } from '@/shared/lib/platform'
+import { Button, ToggleSwitch } from '@/shared/ui'
 import {
   getReminderSettings,
+  reminderAvailable,
   saveReminderSettings,
   syncDailyReminder,
   type ReminderSettings,
   type ReminderStatus,
 } from './dailyReminder'
+import { askWebNotificationPermission } from './webReminder'
 
-/** Daily reminder on/off and its time. Only inside the iOS/Android app. */
-export const ReminderSetting = ({ available = isNativeApp() }: { available?: boolean }) => {
+/** Daily reminder on/off and its time. In the native app and in the web app installed on the home
+ * screen; not in a browser tab. */
+export const ReminderSetting = ({ available = reminderAvailable() }: { available?: boolean }) => {
   const { t } = useLingui()
   const [settings, setSettings] = useState<ReminderSettings>(getReminderSettings)
   const [status, setStatus] = useState<ReminderStatus | null>(null)
@@ -25,6 +27,12 @@ export const ReminderSetting = ({ available = isNativeApp() }: { available?: boo
   const update = (next: ReminderSettings) => {
     saveReminderSettings(next)
     setSettings(next)
+  }
+
+  // iPhone only lets a website ask for notifications right after a tap
+  const allowNotifications = async () => {
+    await askWebNotificationPermission()
+    setStatus(await syncDailyReminder(settings))
   }
 
   const options = [
@@ -57,8 +65,15 @@ export const ReminderSetting = ({ available = isNativeApp() }: { available?: boo
           />
         </label>
       )}
+      {settings.enabled && status === 'needs-permission' && (
+        <Button onClick={() => void allowNotifications()}>
+          <Trans>Allow notifications</Trans>
+        </Button>
+      )}
       <p className="settings-hint">
-        {status === 'blocked' ? (
+        {settings.enabled && status === 'needs-permission' ? (
+          <Trans>Tap “Allow notifications” so BAB can send you the reminder.</Trans>
+        ) : status === 'blocked' ? (
           <Trans>Notifications are blocked for BAB. Turn them on in your phone's settings.</Trans>
         ) : (
           <Trans>A notification every day at the time you choose.</Trans>
