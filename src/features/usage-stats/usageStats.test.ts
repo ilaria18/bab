@@ -5,6 +5,7 @@ import {
   recordReminderActive,
   setUsageConsent,
   startUsageStats,
+  usageStatsCounted,
   type UsageEvent,
   type UsageRow,
   type WeekSummary,
@@ -27,6 +28,7 @@ describe('usage stats', () => {
   const start = () => {
     stop = startUsageStats({
       endpoint: 'https://example.test/usage',
+      counted: true,
       now: () => clock,
       send: async (_endpoint, events) => {
         rows.push(...events)
@@ -110,6 +112,7 @@ describe('usage stats', () => {
     let online = false
     stop = startUsageStats({
       endpoint: 'https://example.test/usage',
+      counted: true,
       now: () => clock,
       send: async (_e, events) => {
         if (!online) return false
@@ -183,5 +186,31 @@ describe('usage stats', () => {
       { v: 3, kind: 'week', week: '2026-W40', active_days: '3-4', platform: 'web' },
       { v: 3, kind: 'week', week: '2026-W41', active_days: '1-2', platform: 'web' },
     ])
+  })
+
+  it('measures nothing in a browser tab or on a computer, only in the installed app', async () => {
+    expect(usageStatsCounted(true, false, 'android')).toBe(true) // native app
+    expect(usageStatsCounted(false, true, 'ios')).toBe(true) // website on the home screen
+    expect(usageStatsCounted(false, true, 'android')).toBe(true)
+    expect(usageStatsCounted(false, false, 'ios')).toBe(false) // browser tab on a phone
+    expect(usageStatsCounted(false, true, 'web')).toBe(false) // installed on a computer
+
+    setUsageConsent(true)
+    stop = startUsageStats({
+      endpoint: 'https://example.test/usage',
+      counted: false,
+      now: () => clock,
+      send: async (_e, events) => {
+        rows.push(...events)
+        return true
+      },
+    })
+    clock = at('2026-09-28T10:00:00')
+    setVisibility('visible')
+    clock += 60_000
+    setVisibility('hidden')
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(rows).toEqual([])
+    expect(JSON.parse(localStorage.getItem('bab.usage-stats.v1')!).queue).toEqual([])
   })
 })

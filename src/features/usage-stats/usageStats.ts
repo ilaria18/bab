@@ -1,6 +1,6 @@
 import { App } from '@capacitor/app'
 import { differenceInCalendarDays, getISOWeek, getISOWeekYear, parseISO } from 'date-fns'
-import { appPlatform, isNativeApp, type AppPlatform } from '@/shared/lib/platform'
+import { appPlatform, isInstalledWebApp, isNativeApp, type AppPlatform } from '@/shared/lib/platform'
 import { toDateKey } from '@/shared/lib/dateKey'
 import { safeStorage } from '@/shared/lib/safeStorage'
 
@@ -21,6 +21,9 @@ import { safeStorage } from '@/shared/lib/safeStorage'
  * What the athlete records (words, body zones, intensity, notes) is never read here — only how
  * many check-ins were completed during a visit.
  * Nothing is collected or sent until setUsageConsent(true) has been called.
+ *
+ * Only the app counts: the native app, or the website opened from its icon on a phone's home
+ * screen. The website in a browser tab, or on a computer, is never measured (see usageStatsCounted).
  */
 
 export type UsageEvent = {
@@ -116,6 +119,17 @@ export const activeDaysBand = (days: number): ActiveDaysBand => (days <= 2 ? '1-
 
 export const getUsageConsent = (): boolean => loadState().consent
 
+/**
+ * Whether this copy of BAB is measured: the native app, or the website installed on a phone's home
+ * screen. Visits in a browser tab (someone looking at the site before installing it) and on a
+ * computer are left out, so the pilot counts only real use of the app.
+ */
+export const usageStatsCounted = (
+  native = isNativeApp(),
+  installed?: boolean,
+  platform?: AppPlatform,
+): boolean => native || ((installed ?? isInstalledWebApp()) && (platform ?? appPlatform()) !== 'web')
+
 // What happens during the current visit, reported when it ends.
 let visitCheckins = 0
 let visitFromReminder = false
@@ -148,6 +162,8 @@ type Options = {
   endpoint?: string
   platform?: AppPlatform
   native?: boolean
+  /** false in a browser tab or on a computer: nothing is measured (defaults to usageStatsCounted()) */
+  counted?: boolean
   now?: () => number
   send?: (endpoint: string, events: UsageRow[]) => Promise<boolean>
   doc?: Document
@@ -176,11 +192,12 @@ export const startUsageStats = ({
   endpoint = import.meta.env.VITE_USAGE_ENDPOINT as string | undefined,
   platform = appPlatform(),
   native = isNativeApp(),
+  counted = usageStatsCounted(native),
   now = Date.now,
   send = defaultSend,
   doc = document,
 }: Options = {}): (() => void) => {
-  if (!endpoint) return () => {}
+  if (!endpoint || !counted) return () => {}
 
   let visibleSince: number | null = doc.visibilityState === 'visible' ? now() : null
   let continued = false
