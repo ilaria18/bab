@@ -8,3 +8,8 @@ export const toDateKey = (date: Date): string => {
 }
 
 export const todayKey = (): string => toDateKey(new Date())
+
+/** The day to log a check-in for: a day from the URL, or undefined (= today) when it is missing
+ * or in the future — check-ins can only be added for today or past days. */
+export const pastOrTodayKey = (key: string | null | undefined, today = todayKey()): string | undefined =>
+  key && key <= today ? key : undefined

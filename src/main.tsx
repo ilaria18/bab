@@ -16,6 +16,7 @@ import { startUsageStats } from './features/usage-stats/usageStats'
 import { hydrateStorage } from './shared/lib/safeStorage'
 import { isNativeApp } from './shared/lib/platform'
 import { listenForReminderTaps, syncDailyReminder } from './features/reminder/dailyReminder'
+import { ROUTES } from './routes/paths'
 
 const isNative = isNativeApp()
 
@@ -32,7 +33,10 @@ const start = async () => {
     void navigator.serviceWorker.getRegistrations().then((all) => all.forEach((r) => void r.unregister()))
   }
   startUsageStats()
-  listenForReminderTaps()
+  // a tap on the daily reminder always lands on the home screen
+  listenForReminderTaps(() => {
+    if (router.state.location.pathname !== ROUTES.checkIn) void router.navigate(ROUTES.checkIn)
+  })
 
   // The catalog has to be loaded before the first render, or the UI would flash untranslated.
   // If the chosen language's catalog can't be fetched (offline), open in the default one instead.
