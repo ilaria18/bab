@@ -200,7 +200,10 @@
 
       <p class="notice">
         <b>—</b> = hidden because it covers fewer than 5 athletes: with a single team it could reveal one person's behaviour.
-        No data identifies an athlete or her phone; the content of check-ins never leaves the phone.
+        Counted: only athletes who chose “Share” in Settings, and only when BAB is opened from its icon on the
+        phone's home screen — the website in a browser tab or on a computer is not counted. “Reminder on” = the
+        athlete allowed notifications and kept the daily reminder on. An athlete who removes and reinstalls the app
+        counts as a new one. No data identifies an athlete or her phone; the content of check-ins never leaves the phone.
         <span id="last-update"></span>
       </p>
     </div>
@@ -476,7 +479,7 @@
       kpi('Athletes started', fmt(s.started), 'opened the app at least once'),
       kpi('Active last week', fmt(s.latestWeekActive), s.latestWeek ? `pilot week ${s.latestWeek}` : 'no data yet'),
       kpi('Check-ins done', fmt(s.totalCheckins), `in ${s.totalOpenings} openings`),
-      kpi('Opened from reminder', fmt(s.openingsFromReminderPct, '%'), '7 pm notification'),
+      kpi('Opened from reminder', fmt(s.openingsFromReminderPct, '%'), 'openings from a tap on the daily reminder'),
       kpi('Still active', fmt(s.latestRetentionPct, '%'), s.latestWeek ? `in week ${s.latestWeek} of use` : ''),
     )
     drawDays()
