@@ -203,3 +203,14 @@
   text-decoration: none;
   box-shadow: 0 8px 10px rgb(0 0 0 / 8%);
 }
+
+/* no going past the current month: nothing can be logged there yet (kept in place so the title doesn't shift) */
+.calendar-month-nav-button:disabled {
+  visibility: hidden;
+}
+
+/* days after today can't be picked */
+.calendar-picker .rdp-disabled .calendar-day-button {
+  opacity: 0.35;
+  cursor: default;
+}

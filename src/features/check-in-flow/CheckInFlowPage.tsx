@@ -7,6 +7,7 @@ import type { CheckInEntry } from '@/entities/check-in/types'
 import { ROUTES, calendarPath, wordsPath } from '@/routes/paths'
 import { PageFrame } from '@/shared/layout'
 import { TabBar } from '@/shared/ui'
+import { pastOrTodayKey } from '@/shared/lib/dateKey'
 import { CheckInFlow } from './CheckInFlow'
 
 /** Full-screen route for the check-in wizard — its own PageFrame, its own URL,
@@ -18,7 +19,8 @@ export const CheckInFlowPage = () => {
   const { wordCards } = useContent()
   const word = wordCards.find((card) => card.id === wordId)
 
-  const date = searchParams.get('date') ?? undefined
+  // a day in the future is treated as today: check-ins can't be added ahead of time
+  const date = pastOrTodayKey(searchParams.get('date'))
   const entryId = searchParams.get('entryId') ?? undefined
 
   // The entry being edited, tagged with the id it was loaded for so a stale

@@ -10,6 +10,7 @@ import { TabBar } from '@/shared/ui'
 import { checkInRepository } from '@/entities/check-in/checkInRepository'
 import { useContent } from '@/i18n'
 import './BodyWordCards.css'
+import { pastOrTodayKey } from '@/shared/lib/dateKey'
 
 const BodyWordCards = () => {
   const { t } = useLingui()
@@ -20,7 +21,7 @@ const BodyWordCards = () => {
   const [searchParams] = useSearchParams()
   // present when this is the first step of logging a check-in for a past day
   // picked on the calendar, rather than today's check-in from the home screen
-  const date = searchParams.get('date') ?? undefined
+  const date = pastOrTodayKey(searchParams.get('date'))
   // present when editing an existing check-in — its word is preselected below
   // so changing the "feeling" is just picking a different card, same as new
   const entryId = searchParams.get('entryId') ?? undefined

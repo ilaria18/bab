@@ -1,6 +1,6 @@
 import { createContext, useContext, useMemo, useState } from 'react'
 import { DayPicker, type DayButtonProps } from 'react-day-picker'
-import { addMonths } from 'date-fns'
+import { addMonths, isAfter, isSameMonth, startOfDay } from 'date-fns'
 import { Trans, useLingui } from '@lingui/react/macro'
 import 'react-day-picker/style.css'
 import { Link, useSearchParams } from 'react-router-dom'
@@ -32,7 +32,8 @@ const MonthChevron = ({ direction }: { direction: 'left' | 'right' }) => (
 const parseDateKey = (key: string | null): Date | undefined => {
   if (!key) return undefined
   const parsed = new Date(`${key}T00:00:00`)
-  return Number.isNaN(parsed.getTime()) ? undefined : parsed
+  // future days can't be opened: nothing can be logged there yet
+  return Number.isNaN(parsed.getTime()) || isAfter(parsed, startOfDay(new Date())) ? undefined : parsed
 }
 
 // A day's marks stay on a single row, so the period drop and the "+N" counter
@@ -110,6 +111,10 @@ export const CalendarPage = () => {
   const initialDate = useMemo(() => parseDateKey(searchParams.get('date')), [searchParams])
 
   const [month, setMonth] = useState(initialDate ?? new Date())
+  const today = new Date()
+  // check-ins can only be added for today or past days: later days can't be picked,
+  // and the calendar doesn't go past the current month
+  const isCurrentMonth = isSameMonth(month, today) || isAfter(month, today)
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(initialDate)
   const { entriesByDate, dailyLogsByDate, refetch } = useCalendarMonthData(month)
 
@@ -160,6 +165,7 @@ export const CalendarPage = () => {
               className="calendar-month-nav-button"
               onClick={() => setMonth((current) => addMonths(current, 1))}
               aria-label={t`Next month`}
+              disabled={isCurrentMonth}
             >
               <MonthChevron direction="right" />
             </button>
@@ -172,6 +178,7 @@ export const CalendarPage = () => {
               onMonthChange={setMonth}
               selected={selectedDate}
               onSelect={setSelectedDate}
+              disabled={{ after: today }}
               weekStartsOn={1}
               locale={dateLocale}
               hideNavigation

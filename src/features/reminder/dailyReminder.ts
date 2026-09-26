@@ -65,14 +65,21 @@ export const syncDailyReminder = async (settings = getReminderSettings()): Promi
   return status
 }
 
-/** Lets the usage statistics count the visits that started from a tap on the reminder. */
-export const listenForReminderTaps = (): void => {
+/**
+ * A tap on the reminder: counted in the usage statistics, and `onTap` brings the athlete to the
+ * home screen (otherwise the app would reopen on whatever page it was left on).
+ */
+export const listenForReminderTaps = (onTap: () => void = () => {}): void => {
+  const tapped = () => {
+    recordOpenedFromReminder()
+    onTap()
+  }
   if (!isNativeApp()) {
-    if (webReminderSupported()) listenForWebReminderTaps(recordOpenedFromReminder)
+    if (webReminderSupported()) listenForWebReminderTaps(tapped)
     return
   }
   void LocalNotifications.addListener('localNotificationActionPerformed', ({ notification }) => {
-    if (notification.id === NOTIFICATION_ID) recordOpenedFromReminder()
+    if (notification.id === NOTIFICATION_ID) tapped()
   })
 }
 
