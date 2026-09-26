@@ -84,6 +84,17 @@ self.addEventListener('fetch', (event) => {
   // the pilot dashboard and the API are separate pages, never the app's shell
   if (url.origin === self.location.origin && (url.pathname.startsWith('/dashboard') || url.pathname.startsWith('/api/'))) return
 
+  // the app's manifest decides whether (and with which icon) the app can be installed: always
+  // fetch it fresh, the saved copy only when offline
+  if (url.origin === self.location.origin && url.pathname === '/manifest.webmanifest') {
+    event.respondWith(
+      fetch(request)
+        .then((response) => cachePut(BUILD_CACHE, '/manifest.webmanifest', response))
+        .catch(async () => (await caches.match('/manifest.webmanifest')) ?? Response.error()),
+    )
+    return
+  }
+
   if (request.mode === 'navigate') {
     event.respondWith(handleNavigation(request, event))
   } else if (url.origin === self.location.origin || url.hostname.endsWith('fonts.googleapis.com') || url.hostname.endsWith('fonts.gstatic.com')) {

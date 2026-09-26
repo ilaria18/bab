@@ -205,6 +205,21 @@ describe('service worker', () => {
     })
   })
 
+  describe('manifest', () => {
+    it('is always fetched fresh, and the saved copy is used only offline', async () => {
+      fetchMock.mockImplementation(async () => page('{"name":"new"}'))
+      const { dispatch } = loadWorker()
+      const manifest = asset('/manifest.webmanifest')
+
+      const first = await dispatch('fetch', manifest).response!
+      expect(await first.text()).toBe('{"name":"new"}')
+
+      fetchMock.mockRejectedValue(new TypeError('offline'))
+      const offline = await dispatch('fetch', manifest).response!
+      expect(await offline.text()).toBe('{"name":"new"}')
+    })
+  })
+
   describe('daily reminder', () => {
     it('shows the notification the server sent, replacing the previous one', async () => {
       const { dispatch, scope } = loadWorker()

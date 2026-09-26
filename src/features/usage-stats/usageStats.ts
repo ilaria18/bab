@@ -83,6 +83,8 @@ type State = {
 }
 
 const STORAGE_KEY = 'bab.usage-stats.v1'
+/** set once the athlete has answered, yes or no (kept apart: saying no wipes the stats state) */
+const ANSWERED_KEY = 'bab.usage-consent-answered'
 /** coming back within this long (e.g. after a quick look at another app) is the same visit */
 export const RESUME_WINDOW_MS = 30_000
 /** visits shorter than this are dropped: the app was opened by mistake */
@@ -156,7 +158,12 @@ export const recordReminderActive = (active: boolean): void => {
 /** Turning consent off also wipes every counter and unsent row kept on the device. */
 export const setUsageConsent = (consent: boolean): void => {
   saveState(consent ? { ...loadState(), consent: true } : emptyState())
+  safeStorage.setItem(ANSWERED_KEY, '1')
 }
+
+/** Whether the athlete has already chosen (in the first-open question or in Settings). */
+export const hasAnsweredUsageConsent = (): boolean =>
+  safeStorage.getItem(ANSWERED_KEY) === '1' || loadState().consent
 
 type Options = {
   endpoint?: string

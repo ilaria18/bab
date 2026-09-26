@@ -13,6 +13,7 @@ import { applyTheme, getInitialTheme } from './features/theme/theme'
 import { registerServiceWorker } from './features/pwa/registerServiceWorker'
 import { listenForInstallPrompt } from './features/pwa/installPrompt'
 import { startUsageStats } from './features/usage-stats/usageStats'
+import { UsageConsentPrompt } from './features/usage-stats/UsageConsentPrompt'
 import { hydrateStorage } from './shared/lib/safeStorage'
 import { isNativeApp } from './shared/lib/platform'
 import { fixDoubleCountedInsets } from './shared/lib/safeArea'
@@ -51,6 +52,8 @@ const start = async () => {
     <StrictMode>
       <I18nProvider i18n={i18n}>
         <RouterProvider router={router} />
+        {/* first open of the installed app: share the anonymous statistics? */}
+        <UsageConsentPrompt />
       </I18nProvider>
       {/* Vercel's page-view counter only works on the website's own domain */}
       {!isNative && <Analytics />}

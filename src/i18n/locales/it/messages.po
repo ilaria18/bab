@@ -543,3 +543,19 @@ msgstr "Consenti le notifiche"
 #: src/features/reminder
 msgid "Tap “Allow notifications” so BAB can send you the reminder."
 msgstr "Tocca “Consenti le notifiche” così BAB può mandarti il promemoria."
+
+#: src/features/usage-stats
+msgid "Share anonymous statistics?"
+msgstr "Condividere le statistiche anonime?"
+
+#: src/features/usage-stats
+msgid "Yes, share"
+msgstr "Sì, condividi"
+
+#: src/features/usage-stats
+msgid "No, thanks"
+msgstr "No, grazie"
+
+#: src/features/usage-stats
+msgid "You can change your choice at any time in Settings."
+msgstr "Puoi cambiare scelta quando vuoi nelle Impostazioni."

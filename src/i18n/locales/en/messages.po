@@ -543,3 +543,19 @@ msgstr "Allow notifications"
 #: src/features/reminder
 msgid "Tap “Allow notifications” so BAB can send you the reminder."
 msgstr "Tap “Allow notifications” so BAB can send you the reminder."
+
+#: src/features/usage-stats
+msgid "Share anonymous statistics?"
+msgstr "Share anonymous statistics?"
+
+#: src/features/usage-stats
+msgid "Yes, share"
+msgstr "Yes, share"
+
+#: src/features/usage-stats
+msgid "No, thanks"
+msgstr "No, thanks"
+
+#: src/features/usage-stats
+msgid "You can change your choice at any time in Settings."
+msgstr "You can change your choice at any time in Settings."
