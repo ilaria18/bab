@@ -15,6 +15,7 @@ import { listenForInstallPrompt } from './features/pwa/installPrompt'
 import { startUsageStats } from './features/usage-stats/usageStats'
 import { hydrateStorage } from './shared/lib/safeStorage'
 import { isNativeApp } from './shared/lib/platform'
+import { fixDoubleCountedInsets } from './shared/lib/safeArea'
 import { listenForReminderTaps, syncDailyReminder } from './features/reminder/dailyReminder'
 import { ROUTES } from './routes/paths'
 
@@ -26,6 +27,8 @@ const start = async () => {
   applyTheme(getInitialTheme())
   // the service worker and the install prompt only make sense for the website, not inside the app
   if (!isNative) {
+    // some Android phones report their system bars' size although the app isn't drawn under them
+    fixDoubleCountedInsets()
     registerServiceWorker()
     listenForInstallPrompt()
   } else if ('serviceWorker' in navigator) {
