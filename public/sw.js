@@ -90,3 +90,40 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(handleAsset(request))
   }
 })
+
+// ── daily reminder (web app installed on the home screen) ────────────────────────────────────
+// The server (api/send-reminders.ts) sends { title, body } in the athlete's language. Every push
+// must show a notification: iPhone stops delivering to apps that receive pushes silently.
+self.addEventListener('push', (event) => {
+  let message = {}
+  try {
+    message = event.data ? event.data.json() : {}
+  } catch {
+    message = {}
+  }
+  event.waitUntil(
+    self.registration.showNotification(message.title || 'BAB', {
+      body: message.body || '',
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: 'bab-daily-reminder', // a new reminder replaces yesterday's instead of piling up
+    }),
+  )
+})
+
+// Tapping it opens BAB, or brings it forward if it is already open; either way the app learns the
+// visit started from the reminder (counted in the anonymous usage statistics).
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  event.waitUntil(
+    (async () => {
+      const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      const open = windows.find((client) => new URL(client.url).origin === self.location.origin)
+      if (open) {
+        open.postMessage({ type: 'bab-reminder-tap' })
+        return open.focus()
+      }
+      return self.clients.openWindow('/?reminder=1')
+    })(),
+  )
+})

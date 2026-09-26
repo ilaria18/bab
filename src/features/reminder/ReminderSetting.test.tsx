@@ -10,7 +10,11 @@ const notifications = vi.hoisted(() => ({
   schedule: vi.fn(async () => ({ notifications: [] })),
 }))
 vi.mock('@capacitor/local-notifications', () => ({ LocalNotifications: notifications }))
-vi.mock('@/shared/lib/platform', () => ({ isNativeApp: () => true, appPlatform: () => 'android' }))
+vi.mock('@/shared/lib/platform', () => ({
+  isNativeApp: () => true,
+  isInstalledWebApp: () => false,
+  appPlatform: () => 'android',
+}))
 
 describe('ReminderSetting', () => {
   beforeEach(() => vi.clearAllMocks())

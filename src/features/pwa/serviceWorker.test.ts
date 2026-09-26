@@ -204,4 +204,35 @@ describe('service worker', () => {
       expect([...caches.stores.get('runtime-v1')!.keys()]).toEqual(['/icon-192.png'])
     })
   })
+
+  describe('daily reminder', () => {
+    it('shows the notification the server sent, replacing the previous one', async () => {
+      const { dispatch, scope } = loadWorker()
+      const showNotification = vi.fn(async () => {})
+      Object.assign(scope, { registration: { showNotification } })
+
+      await dispatch('push', { data: { json: () => ({ title: 'BAB', body: 'Com’è andata oggi?' }) } }).settled()
+
+      expect(showNotification).toHaveBeenCalledWith('BAB', expect.objectContaining({ body: 'Com’è andata oggi?', tag: 'bab-daily-reminder' }))
+    })
+
+    it('opens the app marked as opened from the reminder, or tells the open app', async () => {
+      const { dispatch, scope } = loadWorker()
+      const openWindow = vi.fn(async () => null)
+      const matchAll = vi.fn(async (): Promise<unknown[]> => [])
+      Object.assign(scope.clients, { matchAll, openWindow })
+      const close = vi.fn()
+
+      await dispatch('notificationclick', { notification: { close } }).settled()
+      expect(close).toHaveBeenCalled()
+      expect(openWindow).toHaveBeenCalledWith('/?reminder=1')
+
+      const open = { url: `${ORIGIN}/calendar`, postMessage: vi.fn(), focus: vi.fn(async () => null) }
+      matchAll.mockResolvedValueOnce([open])
+      await dispatch('notificationclick', { notification: { close } }).settled()
+      expect(open.postMessage).toHaveBeenCalledWith({ type: 'bab-reminder-tap' })
+      expect(open.focus).toHaveBeenCalled()
+      expect(openWindow).toHaveBeenCalledTimes(1)
+    })
+  })
 })

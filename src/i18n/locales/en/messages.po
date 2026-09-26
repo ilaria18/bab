@@ -535,3 +535,11 @@ msgstr "A notification every day at the time you choose."
 #: src/features/reminder
 msgid "How was today? Take a minute to listen to your body."
 msgstr "How was today? Take a minute to listen to your body."
+
+#: src/features/reminder
+msgid "Allow notifications"
+msgstr "Allow notifications"
+
+#: src/features/reminder
+msgid "Tap “Allow notifications” so BAB can send you the reminder."
+msgstr "Tap “Allow notifications” so BAB can send you the reminder."
