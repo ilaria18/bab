@@ -18,6 +18,7 @@
     --axis: #c3c2b7;
     --border: rgba(11, 11, 11, 0.1);
     --series: #2a78d6;
+    --series-2: #eb6834;
     --band-low: #86b6ef;
     --band-mid: #3987e5;
     --band-high: #184f95;
@@ -39,6 +40,7 @@
       --axis: #383835;
       --border: rgba(255, 255, 255, 0.1);
       --series: #3987e5;
+      --series-2: #d95926;
       --none: #52514e;
     }
   }
@@ -53,6 +55,7 @@
     --axis: #383835;
     --border: rgba(255, 255, 255, 0.1);
     --series: #3987e5;
+    --series-2: #d95926;
     --none: #52514e;
   }
   * { box-sizing: border-box; }
@@ -116,6 +119,9 @@
   #login h2 { margin: 0 0 8px; font-size: 18px; }
   #login form { display: flex; flex-direction: column; gap: 12px; }
   .error { color: var(--danger); font-size: 13px; min-height: 18px; }
+  .tabs { display: flex; gap: 4px; margin: 0 0 16px; border-bottom: 1px solid var(--border); }
+  .tabs button { border: none; border-bottom: 2px solid transparent; border-radius: 0; background: none; color: var(--ink-2); padding: 10px 14px; }
+  .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -124,7 +130,7 @@
   <div class="wrap">
     <img class="logo" src="/logo-white.png" alt="" width="61" height="28">
     <h1>BAB <span>·</span> Pilot</h1>
-    <p>Anonymous app usage statistics</p>
+    <p>Pilot dashboard</p>
   </div>
 </header>
 
@@ -155,7 +161,12 @@
       <button class="link" type="button" id="logout">Sign out</button>
     </form>
 
-    <div id="content">
+    <div class="tabs" role="tablist">
+      <button type="button" role="tab" id="tab-usage" aria-selected="true" aria-controls="content">App use</button>
+      <button type="button" role="tab" id="tab-research" aria-selected="false" aria-controls="research">Check-ins</button>
+    </div>
+
+    <div id="content" role="tabpanel" aria-labelledby="tab-usage">
       <div class="kpis" id="kpis"></div>
 
       <div class="grid">
@@ -207,6 +218,59 @@
         athlete allowed notifications and kept the daily reminder on. An athlete who removes and reinstalls the app
         counts as a new one. No data identifies an athlete or her phone; the content of check-ins never leaves the phone.
         <span id="last-update"></span>
+      </p>
+    </div>
+
+    <div id="research" role="tabpanel" aria-labelledby="tab-research" hidden>
+      <div class="kpis" id="r-kpis"></div>
+      <div class="grid">
+        <article class="card">
+          <h2>Most used words</h2>
+          <p class="sub">Check-ins per word, with the average intensity (0–10). Hover for details.</p>
+          <div class="chart" id="r-words"></div>
+        </article>
+        <article class="card">
+          <h2>Body areas</h2>
+          <p class="sub">Check-ins that mark each area (left and right together; front and back apart).</p>
+          <div class="chart" id="r-zones"></div>
+        </article>
+        <article class="card">
+          <h2>Intensity</h2>
+          <p class="sub">How many check-ins at each intensity, from 0 (nothing) to 10 (the worst).</p>
+          <div class="chart" id="r-intensity"></div>
+        </article>
+        <article class="card">
+          <h2>On period days vs other days</h2>
+          <p class="sub">Average intensity and energy of the check-ins, by the athlete's answer for that day.</p>
+          <ul class="legend" id="r-period-legend"></ul>
+          <div class="chart" id="r-period"></div>
+        </article>
+        <article class="card">
+          <h2>Kind of sensation</h2>
+          <p class="sub">Check-ins by word category, with the average intensity.</p>
+          <div class="chart" id="r-categories"></div>
+        </article>
+        <article class="card">
+          <h2>When it shows up</h2>
+          <p class="sub">Check-ins by moment (more than one can apply).</p>
+          <div class="chart" id="r-triggers"></div>
+        </article>
+        <article class="card wide">
+          <h2>Check-ins per week</h2>
+          <p class="sub">Week by week (weeks start on Monday). Hover for athletes and average intensity.</p>
+          <div class="chart" id="r-weeks"></div>
+        </article>
+        <article class="card wide">
+          <h2>Period and painkillers</h2>
+          <p class="sub">The check-ins grouped by the athlete's answers for that day.</p>
+          <div class="scroll" id="r-table"></div>
+        </article>
+      </div>
+      <p class="notice">
+        Only check-ins the athletes chose to send (Settings → Your data). A word, body area or group is shown only when
+        at least 3 different athletes are in it — the rest is under “Other” or <b>—</b>. Notes are not shown here: they
+        are only in the database (Supabase → research_checkins). With “Pilot start” set, only the 35 pilot days count.
+        <span id="r-status"></span>
       </p>
     </div>
   </section>
@@ -504,6 +568,179 @@
     $('last-update').textContent = s.lastDataDay ? `Last data received: ${dateIt(s.lastDataDay, { day: 'numeric', month: 'long' })}.` : 'No data received for this period.'
   }
 
+  // ── check-ins tab ─────────────────────────────────────────────────────────────────────
+  let research = null
+  let tab = 'usage'
+
+  const emptyChart = (container, text) => container.replaceChildren(el('div', { class: 'empty' }, text))
+
+  /** horizontal bars: label, bar, value text; one row per item */
+  const hbars = (container, items, valueText, tipRows, color = 'var(--series)') => {
+    const card = container.closest('.card')
+    container.replaceChildren()
+    if (!items.length) { emptyChart(container, 'Not enough data yet (at least 3 athletes).'); return }
+    const width = Math.max(container.clientWidth, 280)
+    const rowH = 30
+    const labelW = Math.min(150, Math.round(width * 0.34))
+    const valueW = 118
+    const max = Math.max(...items.map((i) => i.count), 1)
+    const svg = svgEl('svg', { viewBox: `0 0 ${width} ${items.length * rowH}`, height: items.length * rowH, role: 'img' }, container)
+    items.forEach((item, i) => {
+      const yMid = i * rowH + rowH / 2
+      const t = svgEl('text', { x: labelW - 8, y: yMid + 4, 'text-anchor': 'end', class: 'label' }, svg)
+      t.textContent = item.label.length > 22 ? `${item.label.slice(0, 21)}…` : item.label
+      const len = Math.max(((width - labelW - valueW) * item.count) / max, 2)
+      const h = 16, yTop = yMid - h / 2, r = Math.min(4, len), x = labelW
+      svgEl('path', {
+        d: `M${x},${yTop}H${x + len - r}Q${x + len},${yTop} ${x + len},${yTop + r}V${yTop + h - r}Q${x + len},${yTop + h} ${x + len - r},${yTop + h}H${x}Z`,
+        fill: item.label === 'Other' ? 'var(--none)' : color,
+      }, svg)
+      const v = svgEl('text', { x: x + len + 8, y: yMid + 4, class: 'label' }, svg)
+      v.textContent = valueText(item)
+      const hit = svgEl('rect', { x: 0, y: i * rowH, width, height: rowH, class: 'hit', tabindex: 0 }, svg)
+      hover(hit, card, item.label, tipRows(item))
+    })
+  }
+
+  /** columns over a list of labelled values */
+  const columns = (container, items, tipTitle, tipRows, labelEvery = 1) => {
+    const card = container.closest('.card')
+    if (!items.length) { emptyChart(container, 'Not enough data yet (at least 3 athletes).'); return }
+    const yMax = niceMax(Math.max(...items.map((i) => i.value), 1))
+    const { svg, plot, y } = frame(container, 200, yMax, 4, (v) => Math.round(v), { left: 32, right: 8, top: 10, bottom: 24 })
+    const band = (plot.right - plot.left) / items.length
+    const w = Math.min(28, band * 0.7)
+    items.forEach((item, i) => {
+      const cx = plot.left + band * i + band / 2
+      if (i % labelEvery === 0) {
+        const t = svgEl('text', { x: cx, y: plot.bottom + 16, 'text-anchor': 'middle' }, svg)
+        t.textContent = item.label
+      }
+      if (item.value > 0) svgEl('path', { d: columnPath(cx - w / 2, y(item.value), w, plot.bottom - y(item.value)), fill: 'var(--series)' }, svg)
+      const hit = svgEl('rect', { x: plot.left + band * i, y: plot.top, width: band, height: plot.bottom - plot.top, class: 'hit', tabindex: 0 }, svg)
+      hover(hit, card, tipTitle(item), tipRows(item))
+    })
+  }
+
+  const PERIOD = [
+    { key: 'yes', label: 'On period', color: 'var(--series)' },
+    { key: 'no', label: 'Other days', color: 'var(--series-2)' },
+  ]
+  /** two bars per measure (period / other days), each measure on its own scale */
+  const drawPeriod = () => {
+    const legend = $('r-period-legend')
+    legend.replaceChildren(...PERIOD.map((s) => {
+      const li = el('li'); const i = el('i'); i.style.background = s.color
+      li.append(i, document.createTextNode(s.label)); return li
+    }))
+    const container = $('r-period')
+    const card = container.closest('.card')
+    container.replaceChildren()
+    const p = research.period
+    if (p.yes.meanIntensity === null || p.no.meanIntensity === null) {
+      emptyChart(container, 'Needs check-ins from at least 3 athletes on period days and 3 on other days.')
+      return
+    }
+    const measures = [
+      { label: 'Intensity (0–10)', key: 'meanIntensity', max: 10 },
+      { label: 'Energy (1–7)', key: 'meanEnergy', max: 7 },
+    ]
+    const width = Math.max(container.clientWidth, 280)
+    const labelW = 124, valueW = 40, barH = 16, gap = 2, blockH = 2 * barH + gap + 22
+    const svg = svgEl('svg', { viewBox: `0 0 ${width} ${measures.length * blockH}`, height: measures.length * blockH, role: 'img' }, container)
+    measures.forEach((m, mi) => {
+      const top = mi * blockH
+      const t = svgEl('text', { x: 0, y: top + barH + 4, class: 'label' }, svg)
+      t.textContent = m.label
+      PERIOD.forEach((s, si) => {
+        const value = p[s.key][m.key]
+        const yTop = top + si * (barH + gap)
+        const len = value === null ? 0 : Math.max(((width - labelW - valueW) * value) / m.max, 2)
+        const r = Math.min(4, len), x = labelW
+        if (len > 0) svgEl('path', {
+          d: `M${x},${yTop}H${x + len - r}Q${x + len},${yTop} ${x + len},${yTop + r}V${yTop + barH - r}Q${x + len},${yTop + barH} ${x + len - r},${yTop + barH}H${x}Z`,
+          fill: s.color,
+        }, svg)
+        const v = svgEl('text', { x: x + len + 6, y: yTop + barH - 4, class: 'label' }, svg)
+        v.textContent = fmt(value)
+        const hit = svgEl('rect', { x: 0, y: yTop, width, height: barH + gap, class: 'hit', tabindex: 0 }, svg)
+        hover(hit, card, `${s.label} · ${m.label}`, [
+          ['average', fmt(value)],
+          ['check-ins', fmt(p[s.key].checkIns)],
+          ['athletes', fmt(p[s.key].athletes)],
+        ])
+      })
+    })
+  }
+
+  const renderResearch = () => {
+    if (!research) return
+    const s = research.summary
+    const range = s.firstDay ? `${dateIt(s.firstDay)} – ${dateIt(s.lastDay)}` : 'no data yet'
+    $('r-kpis').replaceChildren(
+      kpi('Athletes who sent data', fmt(s.athletes), range),
+      kpi('Check-ins', fmt(s.checkIns), 'sent by the athletes'),
+      kpi('Check-ins per athlete', fmt(s.medianPerAthlete), 'median'),
+      kpi('Average intensity', fmt(s.meanIntensity), 'from 0 to 10'),
+    )
+    const itemTip = (item) => [
+      ['check-ins', fmt(item.count)],
+      ['athletes', fmt(item.athletes)],
+      ['average intensity', fmt(item.meanIntensity)],
+      ...(item.extra ? [['category', item.extra]] : []),
+    ]
+    const withIntensity = (item) => `${item.count} · avg ${fmt(item.meanIntensity)}`
+    hbars($('r-words'), research.words, withIntensity, itemTip)
+    hbars($('r-zones'), research.zones, (item) => `${item.count}`, itemTip)
+    hbars($('r-categories'), research.categories, withIntensity, itemTip)
+    hbars($('r-triggers'), research.triggers, (item) => `${item.count}`, itemTip)
+    columns($('r-intensity'), research.intensity.map((b) => ({ label: String(b.level), value: b.count })),
+      (b) => `Intensity ${b.label}`, (b) => [['check-ins', fmt(b.value)]])
+    columns($('r-weeks'), research.weeks.map((w) => ({ ...w, label: dateIt(w.from), value: w.checkIns })),
+      (w) => `Week from ${dateIt(w.from, { day: 'numeric', month: 'long' })}`,
+      (w) => [['check-ins', fmt(w.checkIns)], ['athletes', fmt(w.athletes)], ['average intensity', fmt(w.meanIntensity)]],
+      research.weeks.length > 10 ? 2 : 1)
+    drawPeriod()
+    const g = (label, x) => [label, fmt(x.checkIns), fmt(x.athletes), fmt(x.meanIntensity), fmt(x.meanEnergy), fmt(x.painSharePct, '%')]
+    table($('r-table'), ['Day', 'Check-ins', 'Athletes', 'Avg intensity', 'Avg energy', 'Pain words'], [
+      g('On period', research.period.yes),
+      g('Not on period', research.period.no),
+      g('Took a painkiller', research.painkiller.yes),
+      g('No painkiller', research.painkiller.no),
+    ])
+    $('r-status').textContent = s.checkIns ? '' : 'No check-ins have been sent yet.'
+  }
+
+  const loadResearch = async () => {
+    const params = new URLSearchParams()
+    if ($('start').value) params.set('start', $('start').value)
+    $('research').classList.add('loading')
+    try {
+      const response = await fetch(`/api/research-metrics?${params}`, { headers: { Authorization: `Bearer ${password}` }, cache: 'no-store' })
+      if (response.status === 401) { logout('Wrong password.'); return }
+      const body = await response.json()
+      if (!response.ok) throw new Error(body.error || response.status)
+      research = body
+      renderResearch()
+    } catch (error) {
+      $('r-status').textContent = `Could not load the check-ins (${error.message}). Try again shortly.`
+    } finally {
+      $('research').classList.remove('loading')
+    }
+  }
+
+  const showTab = (name) => {
+    tab = name
+    $('tab-usage').setAttribute('aria-selected', String(name === 'usage'))
+    $('tab-research').setAttribute('aria-selected', String(name === 'research'))
+    $('content').hidden = name !== 'usage'
+    $('research').hidden = name !== 'research'
+    // the check-ins don't record the phone type
+    $('platform').closest('label').hidden = name === 'research'
+    if (name === 'research') loadResearch()
+    else render()
+  }
+
   // ── data ──────────────────────────────────────────────────────────────────────────────
   const load = async () => {
     const params = new URLSearchParams()
@@ -534,7 +771,7 @@
 
   const showApp = () => { $('login').hidden = true; $('app').hidden = false }
   const logout = (message = '') => {
-    store.clear(); password = null; data = null
+    store.clear(); password = null; data = null; research = null
     $('app').hidden = true; $('login').hidden = false
     $('login-error').textContent = message
     $('password').value = ''
@@ -548,11 +785,16 @@
     $('login-error').textContent = ''
     load()
   })
-  $('filters').addEventListener('submit', (e) => { e.preventDefault(); load() })
+  $('filters').addEventListener('submit', (e) => { e.preventDefault(); if (tab === 'research') loadResearch(); else load() })
+  $('tab-usage').addEventListener('click', () => showTab('usage'))
+  $('tab-research').addEventListener('click', () => showTab('research'))
   $('platform').addEventListener('change', load)
   $('logout').addEventListener('click', () => logout())
   let resizeTimer
-  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(render, 150) })
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer)
+    resizeTimer = setTimeout(() => (tab === 'research' ? renderResearch() : render()), 150)
+  })
 
   if (password) load()
 })()
