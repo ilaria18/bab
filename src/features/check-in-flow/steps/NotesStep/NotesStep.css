@@ -6,11 +6,13 @@
     --notes-step-ink-on-accent: color-mix(in srgb, var(--color-ground) 8%, black);
 }
 
+/* Fills the step's height on tall screens, but never shrinks below its own content: on a short
+   screen it has to scroll instead. (With min-height: 0 the notes box overflowed the step, past the
+   content's bottom padding, and ended up under the fade above the Next button.) */
 .notes-step {
     display: flex;
     flex-direction: column;
-    flex: 1;
-    min-height: 0;
+    flex: 1 0 auto;
     gap: 24px;
 }
 
