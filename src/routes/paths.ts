@@ -5,6 +5,7 @@ export const ROUTES = {
   calendar: '/calendar',
   settings: '/settings',
   world: '/world',
+  feedback: '/feedback',
 } as const
 
 export const checkInFlowPath = (wordId: string, date?: string, entryId?: string): string => {

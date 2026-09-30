@@ -855,3 +855,75 @@ msgstr "Saved only on this phone: don't delete the app. Send them to BAB without
 #: src/features/settings
 msgid "Your check-ins (notes included) and period and painkiller days go to BAB with the code {code} instead of your name. You can delete them at any time."
 msgstr "Your check-ins (notes included) and period and painkiller days go to BAB with the code {code} instead of your name. You can delete them at any time."
+
+#: src/features/feedback
+msgid "Feedback"
+msgstr "Feedback"
+
+#: src/features/feedback
+msgid "I like it"
+msgstr "I like it"
+
+#: src/features/feedback
+msgid "I have an idea"
+msgstr "I have an idea"
+
+#: src/features/feedback
+msgid "Something's wrong"
+msgstr "Something's wrong"
+
+#: src/features/feedback
+msgid "BAB in general"
+msgstr "BAB in general"
+
+#: src/features/feedback
+msgid "Check-in"
+msgstr "Check-in"
+
+#: src/features/feedback
+msgid "Notifications"
+msgstr "Notifications"
+
+#: src/features/feedback
+msgid "Tell us"
+msgstr "Tell us"
+
+#: src/features/feedback
+msgid "Anonymous: we don't receive your name. Every message is read by the BAB team."
+msgstr "Anonymous: we don't receive your name. Every message is read by the BAB team."
+
+#: src/features/feedback
+msgid "Thank you! Your message has reached the BAB team."
+msgstr "Thank you! Your message has reached the BAB team."
+
+#: src/features/feedback
+msgid "Send another one"
+msgstr "Send another one"
+
+#: src/features/feedback
+msgid "What kind of message?"
+msgstr "What kind of message?"
+
+#: src/features/feedback
+msgid "About"
+msgstr "About"
+
+#: src/features/feedback
+msgid "Your message"
+msgstr "Your message"
+
+#: src/features/feedback
+msgid "Write it the way you'd say it…"
+msgstr "Write it the way you'd say it…"
+
+#: src/features/feedback
+msgid "Sending…"
+msgstr "Sending…"
+
+#: src/features/feedback
+msgid "Send"
+msgstr "Send"
+
+#: src/features/feedback
+msgid "It didn't go through. Check your connection and try again: your message is still here."
+msgstr "It didn't go through. Check your connection and try again: your message is still here."

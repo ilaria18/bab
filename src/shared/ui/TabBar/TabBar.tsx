@@ -45,10 +45,19 @@ const WorldIcon = () => (
   </svg>
 )
 
+const FeedbackIcon = () => (
+  <svg {...ICON_PROPS}>
+    <path d="M5 5.5h14a1.5 1.5 0 0 1 1.5 1.5v8.5A1.5 1.5 0 0 1 19 17h-8l-4.5 3.5V17H5a1.5 1.5 0 0 1-1.5-1.5V7A1.5 1.5 0 0 1 5 5.5Z" />
+    <path d="M8 10h8M8 13h5" />
+  </svg>
+)
+
 const TABS: { to: string; label: MessageDescriptor; icon: () => ReactNode }[] = [
   { to: ROUTES.checkIn, label: msg`Home`, icon: HomeIcon },
   { to: ROUTES.calendar, label: msg`Journal`, icon: CalendarIcon },
   { to: ROUTES.world, label: msg`World`, icon: WorldIcon },
+  // always one tap away: anonymous feedback to the BAB team
+  { to: ROUTES.feedback, label: msg`Feedback`, icon: FeedbackIcon },
   { to: ROUTES.settings, label: msg`Settings`, icon: SettingsIcon },
 ]
 

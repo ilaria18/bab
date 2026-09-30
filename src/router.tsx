@@ -12,6 +12,8 @@ const loadCalendarPage = () =>
   import('./features/calendar/CalendarPage').then((m) => ({ default: m.CalendarPage }))
 const loadAvatarPage = () =>
   import('./features/avatar/AvatarPage').then((m) => ({ default: m.AvatarPage }))
+const loadFeedbackPage = () =>
+  import('./features/feedback/FeedbackPage').then((m) => ({ default: m.FeedbackPage }))
 const loadSettingsPage = () =>
   import('./features/settings/SettingsPage').then((m) => ({ default: m.SettingsPage }))
 
@@ -21,12 +23,13 @@ const CheckInFlowPage = lazy(loadCheckInFlowPage)
 const CalendarPage = lazy(loadCalendarPage)
 const AvatarPage = lazy(loadAvatarPage)
 const SettingsPage = lazy(loadSettingsPage)
+const FeedbackPage = lazy(loadFeedbackPage)
 
 /** Downloads every route's chunk in the background so a first visit to a page opens
  * instantly instead of waiting on the network. Failures are ignored: the route just
  * loads on demand as before. */
 export const preloadRoutes = (): void => {
-  ;[loadCheckIn, loadBodyWordCards, loadCalendarPage, loadAvatarPage, loadSettingsPage, loadCheckInFlowPage].forEach(
+  ;[loadCheckIn, loadBodyWordCards, loadCalendarPage, loadAvatarPage, loadSettingsPage, loadCheckInFlowPage, loadFeedbackPage].forEach(
     (load) => load().catch(() => {}),
   )
 }
@@ -47,4 +50,5 @@ export const router = createBrowserRouter([
   { path: ROUTES.calendar, element: withSuspense(<CalendarPage />), errorElement },
   { path: ROUTES.settings, element: withSuspense(<SettingsPage />), errorElement },
   { path: ROUTES.world, element: withSuspense(<AvatarPage />), errorElement },
+  { path: ROUTES.feedback, element: withSuspense(<FeedbackPage />), errorElement },
 ])

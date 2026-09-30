@@ -855,3 +855,75 @@ msgstr "Salvati solo su questo telefono: non cancellare l’app. Inviali a BAB s
 #: src/features/settings
 msgid "Your check-ins (notes included) and period and painkiller days go to BAB with the code {code} instead of your name. You can delete them at any time."
 msgstr "I tuoi check-in (note comprese) e i giorni di ciclo e antidolorifici vanno a BAB con il codice {code} al posto del nome. Puoi cancellarli quando vuoi."
+
+#: src/features/feedback
+msgid "Feedback"
+msgstr "Feedback"
+
+#: src/features/feedback
+msgid "I like it"
+msgstr "Mi piace"
+
+#: src/features/feedback
+msgid "I have an idea"
+msgstr "Ho un’idea"
+
+#: src/features/feedback
+msgid "Something's wrong"
+msgstr "Qualcosa non va"
+
+#: src/features/feedback
+msgid "BAB in general"
+msgstr "BAB in generale"
+
+#: src/features/feedback
+msgid "Check-in"
+msgstr "Check-in"
+
+#: src/features/feedback
+msgid "Notifications"
+msgstr "Notifiche"
+
+#: src/features/feedback
+msgid "Tell us"
+msgstr "Dicci la tua"
+
+#: src/features/feedback
+msgid "Anonymous: we don't receive your name. Every message is read by the BAB team."
+msgstr "Anonimo: non riceviamo il tuo nome. Ogni messaggio viene letto dal team BAB."
+
+#: src/features/feedback
+msgid "Thank you! Your message has reached the BAB team."
+msgstr "Grazie! Il tuo messaggio è arrivato al team BAB."
+
+#: src/features/feedback
+msgid "Send another one"
+msgstr "Inviane un altro"
+
+#: src/features/feedback
+msgid "What kind of message?"
+msgstr "Che tipo di messaggio?"
+
+#: src/features/feedback
+msgid "About"
+msgstr "Riguarda"
+
+#: src/features/feedback
+msgid "Your message"
+msgstr "Il tuo messaggio"
+
+#: src/features/feedback
+msgid "Write it the way you'd say it…"
+msgstr "Scrivilo come lo diresti…"
+
+#: src/features/feedback
+msgid "Sending…"
+msgstr "Invio…"
+
+#: src/features/feedback
+msgid "Send"
+msgstr "Invia"
+
+#: src/features/feedback
+msgid "It didn't go through. Check your connection and try again: your message is still here."
+msgstr "Non è partito. Controlla la connessione e riprova: il tuo messaggio è ancora qui."
