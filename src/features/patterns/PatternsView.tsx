@@ -155,8 +155,8 @@ export const PatternsView = () => {
             </p>
             <Compare
               series={[
-                { label: t`On period`, className: 'a' },
-                { label: t`Other days`, className: 'b' },
+                { label: t`On period`, className: 'b' },
+                { label: t`Other days`, className: 'a' },
               ]}
               rows={[
                 { label: intensityLabel, max: 10, values: [cycle.period.intensity, cycle.other.intensity] },

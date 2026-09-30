@@ -851,3 +851,11 @@ msgstr "You felt strong or light {positiveCount} times in the last 30 days."
 #: src/features/patterns
 msgid "Good sensations count too: when you feel strong or light, note it!"
 msgstr "Good sensations count too: when you feel strong or light, note it!"
+
+#: src/features/reminder
+msgid "Edit"
+msgstr "Edit"
+
+#: src/features/reminder
+msgid "Save"
+msgstr "Save"

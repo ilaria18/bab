@@ -851,3 +851,11 @@ msgstr "Negli ultimi 30 giorni ti sei sentita forte o leggera {positiveCount} vo
 #: src/features/patterns
 msgid "Good sensations count too: when you feel strong or light, note it!"
 msgstr "Contano anche le sensazioni belle: quando ti senti forte o leggera, segnalo!"
+
+#: src/features/reminder
+msgid "Edit"
+msgstr "Modifica"
+
+#: src/features/reminder
+msgid "Save"
+msgstr "Salva"

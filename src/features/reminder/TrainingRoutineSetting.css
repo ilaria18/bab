@@ -5,17 +5,61 @@
   margin-top: 8px;
 }
 
-/* day + type on the first row, start + end on the second, remove on the side: fits a narrow phone */
-.training-routine__session {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 40px;
-  grid-template-areas:
-    'day kind remove'
-    'start end remove';
+/* saved sessions: one plain line each, with Edit and × */
+.training-routine__list {
+  display: flex;
+  flex-direction: column;
   gap: 8px;
-  padding: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.training-routine__saved {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px 10px 14px;
   border-radius: 16px;
   background: var(--color-surface-raised);
+}
+
+.training-routine__summary {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 15px;
+}
+
+.training-routine__summary b {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.training-routine__summary span {
+  color: var(--color-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* the form for a new or edited session: saved only with "Save" */
+.training-routine__form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+}
+
+.training-routine__session {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas:
+    'day kind'
+    'start end';
+  gap: 8px;
 }
 
 .training-routine__day { grid-area: day; }
@@ -23,19 +67,25 @@
 .training-routine__start { grid-area: start; }
 .training-routine__end { grid-area: end; }
 
+.training-routine__time {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--color-ink-muted);
+}
+
 .training-routine__session .settings-select,
 .training-routine__session .settings-name-input {
   min-width: 0;
   width: 100%;
   box-sizing: border-box;
-  background: var(--color-surface);
 }
 
 .training-routine__remove {
-  grid-area: remove;
-  align-self: center;
   width: 40px;
   height: 40px;
+  flex-shrink: 0;
   border: none;
   border-radius: 20px;
   background: transparent;
@@ -43,6 +93,12 @@
   font-size: 24px;
   line-height: 1;
   cursor: pointer;
+}
+
+.training-routine__remove:disabled,
+.training-routine__saved .settings-link-button:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .training-routine__add {
