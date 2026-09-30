@@ -10,6 +10,12 @@ export const TIME = /^([01]\d|2[0-3]):[0-5]\d$/
 /** a reminder is sent at the first run of the scheduler from its time up to this many minutes later */
 export const WINDOW_MINUTES = 60
 
+export const SLOT_TYPES = ['pre_training', 'post_training', 'pre_match', 'post_match'] as const
+export type SlotType = (typeof SLOT_TYPES)[number]
+/** a weekly training/match notification: ISO weekday (1 = Monday), local time, which text */
+export type Slot = { dow: number; time: string; type: SlotType }
+export type Text = { title: string; body: string }
+
 export type ReminderRow = {
   endpoint: string
   p256dh: string
@@ -19,7 +25,15 @@ export type ReminderRow = {
   title: string
   body: string
   last_sent_day: string | null
+  /** weekly routine (migration 004): empty/null = daily reminder only */
+  slots?: Slot[] | null
+  session_days?: number[] | null
+  texts?: Partial<Record<SlotType, Text>> | null
+  /** what was already sent today, e.g. "2026-10-05 15:00 pre_training", "2026-10-05 daily" */
+  sent_keys?: string[] | null
 }
+
+export const MAX_SLOTS = 60
 
 export const isTimeZone = (value: unknown): value is string => {
   if (typeof value !== 'string' || value.length > 64) return false
@@ -31,11 +45,14 @@ export const isTimeZone = (value: unknown): value is string => {
   }
 }
 
-/** local day (YYYY-MM-DD) and minutes since midnight in a time zone */
-export const localNow = (timeZone: string, now: Date): { day: string; minutes: number } => {
+const WEEKDAYS: Record<string, number> = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 }
+
+/** local day (YYYY-MM-DD), ISO weekday and minutes since midnight in a time zone */
+export const localNow = (timeZone: string, now: Date): { day: string; dow: number; minutes: number } => {
   const parts = Object.fromEntries(
-    new Intl.DateTimeFormat('en-CA', {
+    new Intl.DateTimeFormat('en-US', {
       timeZone,
+      weekday: 'short',
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -46,17 +63,50 @@ export const localNow = (timeZone: string, now: Date): { day: string; minutes: n
       .formatToParts(now)
       .map((p) => [p.type, p.value]),
   )
-  return { day: `${parts.year}-${parts.month}-${parts.day}`, minutes: Number(parts.hour) * 60 + Number(parts.minute) }
+  return {
+    day: `${parts.year}-${parts.month}-${parts.day}`,
+    dow: WEEKDAYS[parts.weekday] ?? 0,
+    minutes: Number(parts.hour) * 60 + Number(parts.minute),
+  }
 }
 
-/** The local day to record as sent, or null if this reminder is not due now. */
-export const dueDay = (row: Pick<ReminderRow, 'remind_at' | 'time_zone' | 'last_sent_day'>, now: Date): string | null => {
-  const { day, minutes } = localNow(row.time_zone, now)
-  if (row.last_sent_day === day) return null
-  const [hour, minute] = row.remind_at.split(':').map(Number)
-  const late = minutes - (hour * 60 + minute)
-  return late >= 0 && late < WINDOW_MINUTES ? day : null
+const minutesOf = (time: string) => {
+  const [hour, minute] = time.split(':').map(Number)
+  return hour * 60 + minute
 }
+
+const inWindow = (nowMinutes: number, time: string) => {
+  const late = nowMinutes - minutesOf(time)
+  return late >= 0 && late < WINDOW_MINUTES
+}
+
+export type DueReminder = { key: string; title: string; body: string }
+
+/**
+ * Everything to send now for one phone. On a day with a training or match: the notifications
+ * 3 hours before / 2 hours after it; on any other day: the daily reminder. Each goes out once
+ * (sent_keys), at the first run of the scheduler from its time on, within an hour.
+ */
+export const dueReminders = (row: ReminderRow, now: Date): { day: string; due: DueReminder[] } => {
+  const { day, dow, minutes } = localNow(row.time_zone, now)
+  const sent = new Set((row.sent_keys ?? []).filter((key) => key.startsWith(day)))
+  if (row.last_sent_day === day) sent.add(`${day} daily`)
+  const due: DueReminder[] = []
+
+  for (const slot of row.slots ?? []) {
+    const key = `${day} ${slot.time} ${slot.type}`
+    const text = row.texts?.[slot.type]
+    if (slot.dow === dow && !sent.has(key) && inWindow(minutes, slot.time)) {
+      due.push({ key, title: text?.title ?? row.title, body: text?.body ?? row.body })
+    }
+  }
+  const sessionDay = (row.session_days ?? []).includes(dow)
+  if (!sessionDay && !sent.has(`${day} daily`) && inWindow(minutes, row.remind_at)) {
+    due.push({ key: `${day} daily`, title: row.title, body: row.body })
+  }
+  return { day, due }
+}
+
 
 export const supabase = (path: string, init: RequestInit = {}) => {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''

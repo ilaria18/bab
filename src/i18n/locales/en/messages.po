@@ -559,3 +559,59 @@ msgstr "No, thanks"
 #: src/features/usage-stats
 msgid "You can change your choice at any time in Settings."
 msgstr "You can change your choice at any time in Settings."
+
+#: src/features/reminder
+msgid "Training in 3 hours: how is your body arriving? Take a minute for a check-in."
+msgstr "Training in 3 hours: how is your body arriving? Take a minute for a check-in."
+
+#: src/features/reminder
+msgid "How did training go? Listen to your body and do a check-in."
+msgstr "How did training go? Listen to your body and do a check-in."
+
+#: src/features/reminder
+msgid "Match in 3 hours: how is your body arriving? Take a minute for a check-in."
+msgstr "Match in 3 hours: how is your body arriving? Take a minute for a check-in."
+
+#: src/features/reminder
+msgid "How did the match go? Listen to your body and do a check-in."
+msgstr "How did the match go? Listen to your body and do a check-in."
+
+#: src/features/reminder
+msgid "Training and matches"
+msgstr "Training and matches"
+
+#: src/features/reminder
+msgid "Day"
+msgstr "Day"
+
+#: src/features/reminder
+msgid "Type"
+msgstr "Type"
+
+#: src/features/reminder
+msgid "Training"
+msgstr "Training"
+
+#: src/features/reminder
+msgid "Match"
+msgstr "Match"
+
+#: src/features/reminder
+msgid "Start"
+msgstr "Start"
+
+#: src/features/reminder
+msgid "End"
+msgstr "End"
+
+#: src/features/reminder
+msgid "Remove"
+msgstr "Remove"
+
+#: src/features/reminder
+msgid "+ Add training or match"
+msgstr "+ Add training or match"
+
+#: src/features/reminder
+msgid "On these days you get a notification 3 hours before and one 2 hours after, instead of the daily reminder. If you leave this empty, you only get the daily reminder."
+msgstr "On these days you get a notification 3 hours before and one 2 hours after, instead of the daily reminder. If you leave this empty, you only get the daily reminder."

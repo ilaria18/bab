@@ -1,4 +1,5 @@
 import { isInstalledWebApp, isNativeApp } from '@/shared/lib/platform'
+import type { IsoWeekday, ReminderSlot, SlotType } from './trainingRoutine'
 
 /**
  * The daily reminder in the web app (the website installed on the home screen), for iPhone
@@ -40,10 +41,19 @@ const request = (method: string, body: unknown) =>
     credentials: 'omit',
   })
 
-export type WebReminder = { time: string; title: string; body: string }
+export type NotificationText = { title: string; body: string }
+
+export type WebReminder = NotificationText & {
+  time: string
+  /** training/match notifications of the weekly routine (empty = daily reminder only) */
+  slots: ReminderSlot[]
+  /** days with a session: no daily reminder on those */
+  sessionDays: IsoWeekday[]
+  texts: Record<SlotType, NotificationText>
+}
 
 /** Subscribes (once) and tells the server the time and text. Throws if anything fails. */
-export const enableWebReminder = async ({ time, title, body }: WebReminder): Promise<void> => {
+export const enableWebReminder = async ({ time, title, body, slots, sessionDays, texts }: WebReminder): Promise<void> => {
   const registration = await navigator.serviceWorker.ready
   let subscription = await registration.pushManager.getSubscription()
   if (!subscription) {
@@ -61,6 +71,9 @@ export const enableWebReminder = async ({ time, title, body }: WebReminder): Pro
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     title,
     body,
+    slots,
+    sessionDays,
+    texts,
   })
   if (!response.ok) throw new Error(`reminder save: ${response.status}`)
 }

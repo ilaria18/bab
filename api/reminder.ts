@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { isTimeZone, json, supabase, TABLE, TIME } from './_reminders.js'
+import { isTimeZone, json, MAX_SLOTS, SLOT_TYPES, supabase, TABLE, TIME, type Slot, type SlotType, type Text } from './_reminders.js'
 import { b64u, isPushEndpoint } from './_webpush.js'
 
 /**
@@ -8,11 +8,13 @@ import { b64u, isPushEndpoint } from './_webpush.js'
  * here and api/send-reminders.ts sends the notification at the chosen time.
  *
  * GET     → { publicKey }  the key the phone needs to subscribe to notifications
- * PUT     { subscription, time, timeZone, title, body }  turns the reminder on or updates it
+ * PUT     { subscription, time, timeZone, title, body, slots?, sessionDays?, texts? }  turns the reminder
+ *         on or updates it; slots/sessionDays/texts carry the weekly training/match routine, if any
  * DELETE  { endpoint }  turns it off: the row is deleted
  *
  * What is stored: the address the phone's push service gave for BAB (random, it names no person),
- * the time, the time zone and the text in the athlete's language. Nothing links it to the usage
+ * the time, the time zone and the text in the athlete's language, and — if she entered her training
+ * routine — the weekly times of the training/match notifications (not what the sessions are). Nothing links it to the usage
  * statistics. A row disappears when the reminder is switched off, when the push service says the
  * address no longer exists, or after 60 days without the app being opened.
  *
@@ -22,6 +24,41 @@ import { b64u, isPushEndpoint } from './_webpush.js'
 
 const text = (value: unknown, max: number): value is string =>
   typeof value === 'string' && value.trim().length > 0 && value.length <= max
+
+/** the routine's weekly notifications: optional, all-or-nothing valid */
+const readRoutine = (
+  body: Record<string, unknown>,
+): { slots: Slot[]; session_days: number[]; texts: Partial<Record<SlotType, Text>> } | null => {
+  const slots = body.slots ?? []
+  const days = body.sessionDays ?? []
+  const texts = (body.texts ?? {}) as Record<string, unknown>
+  if (!Array.isArray(slots) || slots.length > MAX_SLOTS || !Array.isArray(days) || days.length > 7) return null
+  if (typeof texts !== 'object' || texts === null) return null
+  const cleanSlots: Slot[] = []
+  for (const s of slots as Record<string, unknown>[]) {
+    if (
+      !s ||
+      !Number.isInteger(s.dow) ||
+      (s.dow as number) < 1 ||
+      (s.dow as number) > 7 ||
+      typeof s.time !== 'string' ||
+      !TIME.test(s.time) ||
+      !SLOT_TYPES.includes(s.type as SlotType)
+    ) {
+      return null
+    }
+    cleanSlots.push({ dow: s.dow as number, time: s.time, type: s.type as SlotType })
+  }
+  if (!days.every((d) => Number.isInteger(d) && d >= 1 && d <= 7)) return null
+  const cleanTexts: Partial<Record<SlotType, Text>> = {}
+  for (const type of SLOT_TYPES) {
+    const t = texts[type] as { title?: unknown; body?: unknown } | undefined
+    if (t === undefined) continue
+    if (!text(t?.title, 60) || !text(t?.body, 200)) return null
+    cleanTexts[type] = { title: t.title as string, body: t.body as string }
+  }
+  return { slots: cleanSlots, session_days: [...new Set(days as number[])], texts: cleanTexts }
+}
 
 const configured = () => Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.VAPID_PUBLIC_KEY)
 
@@ -60,6 +97,8 @@ export async function PUT(request: Request): Promise<Response> {
   ) {
     return json(400, { error: 'invalid' })
   }
+  const routine = readRoutine(body)
+  if (!routine) return json(400, { error: 'invalid' })
 
   const row = {
     endpoint: subscription!.endpoint,
@@ -69,6 +108,7 @@ export async function PUT(request: Request): Promise<Response> {
     time_zone: body.timeZone,
     title: body.title,
     body: body.body,
+    ...routine,
     updated_at: new Date().toISOString(),
   }
   // insert, or update the same phone's row (last_sent_day is left as it is)

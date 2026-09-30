@@ -1,10 +1,11 @@
 /// <reference types="node" />
 import { timingSafeEqual } from 'node:crypto'
-import { dueDay, json, supabase, TABLE, type ReminderRow } from './_reminders.js'
+import { dueReminders, json, supabase, TABLE, type ReminderRow } from './_reminders.js'
 import { sendPush, type VapidKeys } from './_webpush.js'
 
 /**
- * Sends the web app's daily reminders that are due. Called every 5 minutes by a scheduled job
+ * Sends the web app's reminders that are due: the daily one, or on training/match days the
+ * notifications 3 hours before and 2 hours after the session. Called every 5 minutes by a scheduled job
  * in Supabase (analytics/reminder-cron.sql) with  Authorization: Bearer <CRON_SECRET>.
  * Each reminder goes out once a day, at the first call from its time on (within an hour).
  *
@@ -51,24 +52,35 @@ const run = async (request: Request): Promise<Response> => {
   let failed = 0
   await Promise.all(
     rows.map(async (row) => {
-      const day = dueDay(row, now)
-      if (!day) return
-      try {
-        const status = await sendPush(row, { title: row.title, body: row.body }, keys)
-        if (status === 404 || status === 410) {
-          removed += 1
-          await supabase(byEndpoint(row), { method: 'DELETE' })
-        } else if (status >= 200 && status < 300) {
-          sent += 1
-          await supabase(byEndpoint(row), { method: 'PATCH', body: JSON.stringify({ last_sent_day: day }) })
-        } else {
+      const { day, due } = dueReminders(row, now)
+      if (due.length === 0) return
+      const delivered: string[] = []
+      for (const reminder of due) {
+        try {
+          const status = await sendPush(row, { title: reminder.title, body: reminder.body }, keys)
+          if (status === 404 || status === 410) {
+            removed += 1
+            await supabase(byEndpoint(row), { method: 'DELETE' })
+            return
+          }
+          if (status >= 200 && status < 300) {
+            sent += 1
+            delivered.push(reminder.key)
+          } else {
+            failed += 1
+            console.error('Push service refused a reminder', status, new URL(row.endpoint).hostname)
+          }
+        } catch (error) {
           failed += 1
-          console.error('Push service refused a reminder', status, new URL(row.endpoint).hostname)
+          console.error('Could not send a reminder', error)
         }
-      } catch (error) {
-        failed += 1
-        console.error('Could not send a reminder', error)
       }
+      if (delivered.length === 0) return
+      // only today's keys are kept: yesterday's can never match again
+      const sentKeys = [...(row.sent_keys ?? []).filter((key) => key.startsWith(day)), ...delivered]
+      const patch: Record<string, unknown> = { sent_keys: sentKeys }
+      if (delivered.includes(`${day} daily`)) patch.last_sent_day = day
+      await supabase(byEndpoint(row), { method: 'PATCH', body: JSON.stringify(patch) })
     }),
   )
   return json(200, { checked: rows.length, sent, removed, failed })

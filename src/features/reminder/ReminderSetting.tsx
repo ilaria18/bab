@@ -10,6 +10,7 @@ import {
   type ReminderStatus,
 } from './dailyReminder'
 import { askWebNotificationPermission } from './webReminder'
+import { TrainingRoutineSetting } from './TrainingRoutineSetting'
 
 /** Daily reminder on/off and its time. In the native app and in the web app installed on the home
  * screen; not in a browser tab. */
@@ -79,6 +80,9 @@ export const ReminderSetting = ({ available = reminderAvailable() }: { available
           <Trans>A notification every day at the time you choose.</Trans>
         )}
       </p>
+      {settings.enabled && (
+        <TrainingRoutineSetting onChange={() => void syncDailyReminder(settings).then(setStatus)} />
+      )}
     </div>
   )
 }

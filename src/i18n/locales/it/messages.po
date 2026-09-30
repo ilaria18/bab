@@ -559,3 +559,59 @@ msgstr "No, grazie"
 #: src/features/usage-stats
 msgid "You can change your choice at any time in Settings."
 msgstr "Puoi cambiare scelta quando vuoi nelle Impostazioni."
+
+#: src/features/reminder
+msgid "Training in 3 hours: how is your body arriving? Take a minute for a check-in."
+msgstr "Allenamento tra 3 ore: come arriva il tuo corpo? Prenditi un minuto per un check-in."
+
+#: src/features/reminder
+msgid "How did training go? Listen to your body and do a check-in."
+msgstr "Com’è andato l’allenamento? Ascolta il tuo corpo e fai un check-in."
+
+#: src/features/reminder
+msgid "Match in 3 hours: how is your body arriving? Take a minute for a check-in."
+msgstr "Partita tra 3 ore: come arriva il tuo corpo? Prenditi un minuto per un check-in."
+
+#: src/features/reminder
+msgid "How did the match go? Listen to your body and do a check-in."
+msgstr "Com’è andata la partita? Ascolta il tuo corpo e fai un check-in."
+
+#: src/features/reminder
+msgid "Training and matches"
+msgstr "Allenamenti e partite"
+
+#: src/features/reminder
+msgid "Day"
+msgstr "Giorno"
+
+#: src/features/reminder
+msgid "Type"
+msgstr "Tipo"
+
+#: src/features/reminder
+msgid "Training"
+msgstr "Allenamento"
+
+#: src/features/reminder
+msgid "Match"
+msgstr "Partita"
+
+#: src/features/reminder
+msgid "Start"
+msgstr "Inizio"
+
+#: src/features/reminder
+msgid "End"
+msgstr "Fine"
+
+#: src/features/reminder
+msgid "Remove"
+msgstr "Rimuovi"
+
+#: src/features/reminder
+msgid "+ Add training or match"
+msgstr "+ Aggiungi allenamento o partita"
+
+#: src/features/reminder
+msgid "On these days you get a notification 3 hours before and one 2 hours after, instead of the daily reminder. If you leave this empty, you only get the daily reminder."
+msgstr "In questi giorni ricevi una notifica 3 ore prima e una 2 ore dopo, al posto del promemoria giornaliero. Se lasci vuoto, ricevi solo il promemoria giornaliero."
