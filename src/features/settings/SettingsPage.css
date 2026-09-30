@@ -71,3 +71,16 @@
   font-size: 15px;
   color: var(--color-ink);
 }
+
+/* a quiet secondary action under a main button (e.g. "Cancel") */
+.settings-link-button {
+  align-self: center;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: var(--color-ink-muted);
+  font-family: var(--font-body);
+  font-size: 16px;
+  text-decoration: underline;
+  cursor: pointer;
+}

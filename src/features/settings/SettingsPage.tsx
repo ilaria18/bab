@@ -6,6 +6,7 @@ import { useInstallApp } from '@/features/pwa/installPrompt'
 import { useUserProfile } from '@/entities/user-profile/useUserProfile'
 import { LANGUAGE_SELECTION_ENABLED } from '@/i18n'
 import { UsageStatsSetting } from '@/features/usage-stats/UsageStatsSetting'
+import { DataExportSetting } from '@/features/data-export/DataExportSetting'
 import { ReminderSetting } from '@/features/reminder/ReminderSetting'
 import { LanguagePicker } from './LanguagePicker'
 import './SettingsPage.css'
@@ -58,6 +59,8 @@ export const SettingsPage = () => {
         <ReminderSetting />
 
         <UsageStatsSetting />
+
+        <DataExportSetting />
 
         {installStatus !== 'unavailable' && (
           <div className="settings-section">

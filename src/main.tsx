@@ -30,6 +30,8 @@ const start = async () => {
   if (!isNative) {
     // some Android phones report their system bars' size although the app isn't drawn under them
     fixDoubleCountedInsets()
+    // the check-ins live only on the phone: ask the browser never to clear them to make room
+    void navigator.storage?.persist?.().catch(() => false)
     registerServiceWorker()
     listenForInstallPrompt()
   } else if ('serviceWorker' in navigator) {

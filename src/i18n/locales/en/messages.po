@@ -615,3 +615,43 @@ msgstr "+ Add training or match"
 #: src/features/reminder
 msgid "On these days you get a notification 3 hours before and one 2 hours after, instead of the daily reminder. If you leave this empty, you only get the daily reminder."
 msgstr "On these days you get a notification 3 hours before and one 2 hours after, instead of the daily reminder. If you leave this empty, you only get the daily reminder."
+
+#: src/features/data-export
+msgid "Your data"
+msgstr "Your data"
+
+#: src/features/data-export
+msgid "Your check-ins are saved only on this phone: don't delete the app during the pilot. At the end you can send them to the BAB team as a file, without your name."
+msgstr "Your check-ins are saved only on this phone: don't delete the app during the pilot. At the end you can send them to the BAB team as a file, without your name."
+
+#: src/features/data-export
+msgid "The file contains your check-ins (words, intensity, energy, body areas, notes) and the days of your period and painkillers, with your code {code} instead of your name. You choose where to send it; nothing is sent until you do."
+msgstr "The file contains your check-ins (words, intensity, energy, body areas, notes) and the days of your period and painkillers, with your code {code} instead of your name. You choose where to send it; nothing is sent until you do."
+
+#: src/features/data-export
+msgid "Create the file"
+msgstr "Create the file"
+
+#: src/features/data-export
+msgid "Cancel"
+msgstr "Cancel"
+
+#: src/features/data-export
+msgid "Send my data"
+msgstr "Send my data"
+
+#: src/features/data-export
+msgid "Done, thank you!"
+msgstr "Done, thank you!"
+
+#: src/features/data-export
+msgid "The file was saved in your Downloads: send it to the BAB team from there."
+msgstr "The file was saved in your Downloads: send it to the BAB team from there."
+
+#: src/features/data-export
+msgid "There are no check-ins to send yet."
+msgstr "There are no check-ins to send yet."
+
+#: src/features/data-export
+msgid "Something went wrong while creating the file. Please try again."
+msgstr "Something went wrong while creating the file. Please try again."
