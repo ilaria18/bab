@@ -8,7 +8,7 @@
   --tab-bar-ink-muted-on-cycle: color-mix(in srgb, var(--tab-bar-ink-on-cycle) 55%, transparent);
   /* icon + label + top/bottom padding, so other screens can float content
      above the tab bar instead of guessing its rendered height */
-  --tab-bar-height: calc(76px + var(--safe-bottom));
+  --tab-bar-height: calc(68px + var(--safe-bottom));
 }
 
 .tab-bar {
@@ -31,11 +31,13 @@
 
 .tab-bar-item {
   display: flex;
-  flex: 1;
+  flex: 1 1 0;
+  /* five equal tabs that shrink with the screen instead of pushing each other out */
+  min-width: 0;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 16px 0 calc(16px + var(--safe-bottom));
+  padding: 12px 2px calc(12px + var(--safe-bottom));
   color: var(--tab-bar-ink-muted-on-cycle);
   text-decoration: none;
 }
@@ -50,7 +52,12 @@
 }
 
 .tab-bar-label {
-  font-size: 12px;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  /* 12px on normal phones, down to 10px on the narrowest ones */
+  font-size: clamp(10px, 3.1vw, 12px);
   font-weight: 500;
   line-height: 16px;
 }

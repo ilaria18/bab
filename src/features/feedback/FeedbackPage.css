@@ -27,19 +27,24 @@
 }
 
 .feedback-kinds {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  /* the three choices always on one line, equal widths */
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .feedback-kind {
-  padding: 10px 16px;
+  min-height: 44px;
+  padding: 8px 2px;
+  line-height: 1.2;
+  text-align: center;
   border: 1px solid var(--color-border);
   border-radius: 22px;
   background: var(--color-surface);
   color: var(--color-ink);
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: clamp(12px, 3.3vw, 15px);
+  text-wrap: balance;
   font-weight: 500;
   cursor: pointer;
 }
