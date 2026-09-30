@@ -1,45 +1,61 @@
 import { useState } from 'react'
-import { Trans } from '@lingui/react/macro'
+import { Trans, useLingui } from '@lingui/react/macro'
 import { checkInRepository } from '@/entities/check-in/checkInRepository'
 import { dailyLogRepository } from '@/entities/daily-log/dailyLogRepository'
 import { wordCardsFor } from '@/i18n'
 import { isNativeApp } from '@/shared/lib/platform'
-import { todayKey } from '@/shared/lib/dateKey'
 import { Button } from '@/shared/ui'
-import { buildCsv, participantCode, shareOrDownload, type ShareResult } from './exportData'
+import { buildRows, deleteResearchData, lastSentAt, participantCode, sendResearchData } from './researchData'
 
-type State = 'idle' | 'confirm' | 'working' | ShareResult | 'empty' | 'error'
+type State = 'idle' | 'confirm' | 'working' | 'sent' | 'confirm-delete' | 'deleted' | 'empty' | 'error'
 
 /**
- * "Your data": the check-ins stay on this phone; at the end of the pilot the athlete can send
- * them as a file, only by her own choice (two taps, and she picks where it goes).
- * Web app only: the native app's WebView has no share menu for files.
+ * "Your data": the check-ins stay on this phone; the athlete can send them to the BAB research
+ * database, only by her own choice (two taps), send them again to update them, or delete what
+ * she sent. Web app only (the pilot runs on it).
  */
 export const DataExportSetting = ({ available = !isNativeApp() }: { available?: boolean }) => {
+  const { i18n } = useLingui()
   const [state, setState] = useState<State>('idle')
+  const [sentAt, setSentAt] = useState(lastSentAt)
   if (!available) return null
   const code = participantCode()
 
-  const create = async () => {
+  const send = async () => {
     setState('working')
     try {
       const [entries, logs] = await Promise.all([
         checkInRepository.getAll(),
         dailyLogRepository.getRange('0000-01-01', '9999-12-31'),
       ])
-      if (entries.length === 0 && logs.length === 0) {
+      const words = new Map(wordCardsFor('en').map((card) => [card.id, { word: card.word, category: card.category }]))
+      const rows = buildRows(entries, logs, words)
+      if (rows.length === 0) {
         setState('empty')
         return
       }
-      const words = new Map(wordCardsFor('en').map((card) => [card.id, { word: card.word, category: card.category }]))
-      const csv = buildCsv(code, entries, logs, words)
-      const file = new File([csv], `bab-${code}-${todayKey()}.csv`, { type: 'text/csv' })
-      setState(await shareOrDownload(file))
+      await sendResearchData(rows)
+      setSentAt(lastSentAt())
+      setState('sent')
     } catch (error) {
-      console.error('Could not create the data file', error)
+      console.error('Could not send the data', error)
       setState('error')
     }
   }
+
+  const remove = async () => {
+    setState('working')
+    try {
+      await deleteResearchData()
+      setSentAt(null)
+      setState('deleted')
+    } catch (error) {
+      console.error('Could not delete the data', error)
+      setState('error')
+    }
+  }
+
+  const sentDate = sentAt ? i18n.date(new Date(sentAt), { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : null
 
   return (
     <div className="settings-section">
@@ -49,40 +65,67 @@ export const DataExportSetting = ({ available = !isNativeApp() }: { available?: 
       <p className="settings-hint">
         <Trans>
           Your check-ins are saved only on this phone: don't delete the app during the pilot. At the
-          end you can send them to the BAB team as a file, without your name.
+          end you can send them to the BAB team, without your name.
         </Trans>
       </p>
 
-      {state === 'confirm' ? (
+      {state === 'confirm' && (
         <>
           <p className="settings-hint">
             <Trans>
-              The file contains your check-ins (words, intensity, energy, body areas, notes) and the
-              days of your period and painkillers, with your code {code} instead of your name. You
-              choose where to send it; nothing is sent until you do.
+              We will send your check-ins (words, intensity, energy, body areas, notes) and the days
+              of your period and painkillers to the BAB research database, with your code {code} instead
+              of your name. You can delete them from there at any time, here.
             </Trans>
           </p>
-          <Button onClick={() => void create()}>
-            <Trans>Create the file</Trans>
+          <Button onClick={() => void send()}>
+            <Trans>Yes, send</Trans>
           </Button>
           <button type="button" className="settings-link-button" onClick={() => setState('idle')}>
             <Trans>Cancel</Trans>
           </button>
         </>
-      ) : (
+      )}
+
+      {state === 'confirm-delete' && (
+        <>
+          <p className="settings-hint">
+            <Trans>Delete the data you sent from the BAB database? Your check-ins stay on this phone.</Trans>
+          </p>
+          <Button onClick={() => void remove()}>
+            <Trans>Yes, delete</Trans>
+          </Button>
+          <button type="button" className="settings-link-button" onClick={() => setState('idle')}>
+            <Trans>Cancel</Trans>
+          </button>
+        </>
+      )}
+
+      {state !== 'confirm' && state !== 'confirm-delete' && (
         <Button disabled={state === 'working'} onClick={() => setState('confirm')}>
-          <Trans>Send my data</Trans>
+          {sentAt ? <Trans>Send my data again</Trans> : <Trans>Send my data</Trans>}
         </Button>
       )}
 
-      {state === 'shared' && (
+      {sentDate && state !== 'confirm-delete' && (
+        <>
+          <p className="settings-hint">
+            <Trans>Last sent: {sentDate}</Trans>
+          </p>
+          <button type="button" className="settings-link-button" onClick={() => setState('confirm-delete')}>
+            <Trans>Delete the data I sent</Trans>
+          </button>
+        </>
+      )}
+
+      {state === 'sent' && (
         <p className="settings-hint">
-          <Trans>Done, thank you!</Trans>
+          <Trans>Sent, thank you!</Trans>
         </p>
       )}
-      {state === 'downloaded' && (
+      {state === 'deleted' && (
         <p className="settings-hint">
-          <Trans>The file was saved in your Downloads: send it to the BAB team from there.</Trans>
+          <Trans>Your data has been deleted from the BAB database.</Trans>
         </p>
       )}
       {state === 'empty' && (
@@ -92,7 +135,7 @@ export const DataExportSetting = ({ available = !isNativeApp() }: { available?: 
       )}
       {state === 'error' && (
         <p className="settings-hint">
-          <Trans>Something went wrong while creating the file. Please try again.</Trans>
+          <Trans>Something went wrong. Check your connection and try again.</Trans>
         </p>
       )}
     </div>

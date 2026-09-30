@@ -621,18 +621,6 @@ msgid "Your data"
 msgstr "Your data"
 
 #: src/features/data-export
-msgid "Your check-ins are saved only on this phone: don't delete the app during the pilot. At the end you can send them to the BAB team as a file, without your name."
-msgstr "Your check-ins are saved only on this phone: don't delete the app during the pilot. At the end you can send them to the BAB team as a file, without your name."
-
-#: src/features/data-export
-msgid "The file contains your check-ins (words, intensity, energy, body areas, notes) and the days of your period and painkillers, with your code {code} instead of your name. You choose where to send it; nothing is sent until you do."
-msgstr "The file contains your check-ins (words, intensity, energy, body areas, notes) and the days of your period and painkillers, with your code {code} instead of your name. You choose where to send it; nothing is sent until you do."
-
-#: src/features/data-export
-msgid "Create the file"
-msgstr "Create the file"
-
-#: src/features/data-export
 msgid "Cancel"
 msgstr "Cancel"
 
@@ -641,17 +629,49 @@ msgid "Send my data"
 msgstr "Send my data"
 
 #: src/features/data-export
-msgid "Done, thank you!"
-msgstr "Done, thank you!"
-
-#: src/features/data-export
-msgid "The file was saved in your Downloads: send it to the BAB team from there."
-msgstr "The file was saved in your Downloads: send it to the BAB team from there."
-
-#: src/features/data-export
 msgid "There are no check-ins to send yet."
 msgstr "There are no check-ins to send yet."
 
 #: src/features/data-export
-msgid "Something went wrong while creating the file. Please try again."
-msgstr "Something went wrong while creating the file. Please try again."
+msgid "Your check-ins are saved only on this phone: don't delete the app during the pilot. At the end you can send them to the BAB team, without your name."
+msgstr "Your check-ins are saved only on this phone: don't delete the app during the pilot. At the end you can send them to the BAB team, without your name."
+
+#: src/features/data-export
+msgid "We will send your check-ins (words, intensity, energy, body areas, notes) and the days of your period and painkillers to the BAB research database, with your code {code} instead of your name. You can delete them from there at any time, here."
+msgstr "We will send your check-ins (words, intensity, energy, body areas, notes) and the days of your period and painkillers to the BAB research database, with your code {code} instead of your name. You can delete them from there at any time, here."
+
+#: src/features/data-export
+msgid "Yes, send"
+msgstr "Yes, send"
+
+#: src/features/data-export
+msgid "Delete the data you sent from the BAB database? Your check-ins stay on this phone."
+msgstr "Delete the data you sent from the BAB database? Your check-ins stay on this phone."
+
+#: src/features/data-export
+msgid "Yes, delete"
+msgstr "Yes, delete"
+
+#: src/features/data-export
+msgid "Send my data again"
+msgstr "Send my data again"
+
+#: src/features/data-export
+msgid "Last sent: {sentDate}"
+msgstr "Last sent: {sentDate}"
+
+#: src/features/data-export
+msgid "Delete the data I sent"
+msgstr "Delete the data I sent"
+
+#: src/features/data-export
+msgid "Sent, thank you!"
+msgstr "Sent, thank you!"
+
+#: src/features/data-export
+msgid "Your data has been deleted from the BAB database."
+msgstr "Your data has been deleted from the BAB database."
+
+#: src/features/data-export
+msgid "Something went wrong. Check your connection and try again."
+msgstr "Something went wrong. Check your connection and try again."
