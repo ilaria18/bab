@@ -226,7 +226,7 @@
       <div class="grid">
         <article class="card">
           <h2>Most used words</h2>
-          <p class="sub">Check-ins per word, with the average intensity (0–10). Hover for details.</p>
+          <p class="sub">Check-ins per word, with the average intensity (0–10; for strong and light it means how strong or light). Hover for details.</p>
           <div class="chart" id="r-words"></div>
         </article>
         <article class="card">
@@ -236,23 +236,28 @@
         </article>
         <article class="card">
           <h2>Intensity</h2>
-          <p class="sub">How many check-ins at each intensity, from 0 (nothing) to 10 (the worst).</p>
+          <p class="sub">Symptom check-ins at each intensity, from 0 (nothing) to 10 (the worst). Strong and light are not included.</p>
           <div class="chart" id="r-intensity"></div>
         </article>
         <article class="card">
           <h2>On period days vs other days</h2>
-          <p class="sub">Average intensity and energy of the check-ins, by the athlete's answer for that day.</p>
+          <p class="sub">By the athlete's answer for that day: average symptom intensity, energy, share of positive check-ins (strong, light) and of yellow/red symptoms.</p>
           <ul class="legend" id="r-period-legend"></ul>
           <div class="chart" id="r-period"></div>
         </article>
         <article class="card">
           <h2>Kind of sensation</h2>
-          <p class="sub">Check-ins by word category, with the average intensity.</p>
+          <p class="sub">Check-ins by word category, with the average symptom intensity (strong and light count in “muscle” but not in its average).</p>
           <div class="chart" id="r-categories"></div>
         </article>
         <article class="card">
+          <h2>Signal</h2>
+          <p class="sub">Positive words, and symptoms by the app's signal: green = normal for an athlete, yellow = keep an eye on it, red = warning. With the average symptom intensity.</p>
+          <div class="chart" id="r-signals"></div>
+        </article>
+        <article class="card">
           <h2>When it shows up</h2>
-          <p class="sub">Check-ins by moment (more than one can apply).</p>
+          <p class="sub">Symptom check-ins by moment (more than one can apply; not asked for strong and light).</p>
           <div class="chart" id="r-triggers"></div>
         </article>
         <article class="card wide">
@@ -267,7 +272,8 @@
         </article>
       </div>
       <p class="notice">
-        Only check-ins the athletes chose to send (Settings → Your data). A word, body area or group is shown only when
+        Only check-ins the athletes chose to send (Settings → Your data). Intensity averages cover symptoms only: for the
+        positive words (strong, light) intensity means how strong or light, so they are counted apart. A word, body area or group is shown only when
         at least 3 different athletes are in it — the rest is under “Other” or <b>—</b>. Notes are not shown here: they
         are only in the database (Supabase → research_checkins). With “Pilot start” set, only the 35 pilot days count.
         <span id="r-status"></span>
@@ -607,7 +613,8 @@
     const card = container.closest('.card')
     if (!items.length) { emptyChart(container, 'Not enough data yet (at least 3 athletes).'); return }
     const yMax = niceMax(Math.max(...items.map((i) => i.value), 1))
-    const { svg, plot, y } = frame(container, 200, yMax, 4, (v) => Math.round(v), { left: 32, right: 8, top: 10, bottom: 24 })
+    const ticks = yMax % 4 === 0 ? 4 : 5 // whole numbers on the axis
+    const { svg, plot, y } = frame(container, 200, yMax, ticks, (v) => Math.round(v), { left: 32, right: 8, top: 10, bottom: 24 })
     const band = (plot.right - plot.left) / items.length
     const w = Math.min(28, band * 0.7)
     items.forEach((item, i) => {
@@ -644,6 +651,8 @@
     const measures = [
       { label: 'Intensity (0–10)', key: 'meanIntensity', max: 10 },
       { label: 'Energy (1–7)', key: 'meanEnergy', max: 7 },
+      { label: 'Positive (%)', key: 'positiveSharePct', max: 100 },
+      { label: 'Yellow/red (%)', key: 'alertSharePct', max: 100 },
     ]
     const width = Math.max(container.clientWidth, 280)
     const labelW = 124, valueW = 40, barH = 16, gap = 2, blockH = 2 * barH + gap + 22
@@ -681,7 +690,8 @@
       kpi('Athletes who sent data', fmt(s.athletes), range),
       kpi('Check-ins', fmt(s.checkIns), 'sent by the athletes'),
       kpi('Check-ins per athlete', fmt(s.medianPerAthlete), 'median'),
-      kpi('Average intensity', fmt(s.meanIntensity), 'from 0 to 10'),
+      kpi('Average intensity', fmt(s.meanIntensity), 'symptoms only, 0 to 10'),
+      kpi('Positive check-ins', fmt(s.positiveSharePct, '%'), 'strong or light'),
     )
     const itemTip = (item) => [
       ['check-ins', fmt(item.count)],
@@ -693,6 +703,7 @@
     hbars($('r-words'), research.words, withIntensity, itemTip)
     hbars($('r-zones'), research.zones, (item) => `${item.count}`, itemTip)
     hbars($('r-categories'), research.categories, withIntensity, itemTip)
+    hbars($('r-signals'), research.signals, (item) => (item.label === 'Positive' ? `${item.count}` : withIntensity(item)), itemTip)
     hbars($('r-triggers'), research.triggers, (item) => `${item.count}`, itemTip)
     columns($('r-intensity'), research.intensity.map((b) => ({ label: String(b.level), value: b.count })),
       (b) => `Intensity ${b.label}`, (b) => [['check-ins', fmt(b.value)]])
@@ -701,8 +712,9 @@
       (w) => [['check-ins', fmt(w.checkIns)], ['athletes', fmt(w.athletes)], ['average intensity', fmt(w.meanIntensity)]],
       research.weeks.length > 10 ? 2 : 1)
     drawPeriod()
-    const g = (label, x) => [label, fmt(x.checkIns), fmt(x.athletes), fmt(x.meanIntensity), fmt(x.meanEnergy), fmt(x.painSharePct, '%')]
-    table($('r-table'), ['Day', 'Check-ins', 'Athletes', 'Avg intensity', 'Avg energy', 'Pain words'], [
+    const g = (label, x) => [label, fmt(x.checkIns), fmt(x.athletes), fmt(x.meanIntensity), fmt(x.meanEnergy),
+      fmt(x.positiveSharePct, '%'), fmt(x.alertSharePct, '%'), fmt(x.painSharePct, '%')]
+    table($('r-table'), ['Day', 'Check-ins', 'Athletes', 'Avg intensity (symptoms)', 'Avg energy', 'Positive', 'Yellow/red', 'Pain words'], [
       g('On period', research.period.yes),
       g('Not on period', research.period.no),
       g('Took a painkiller', research.painkiller.yes),

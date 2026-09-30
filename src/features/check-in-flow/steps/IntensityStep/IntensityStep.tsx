@@ -72,22 +72,27 @@ export const IntensityStep = ({
         />
       </div>
 
-      <p className="intensity-step__label">
-        <Trans>When do you notice it?</Trans>
-      </p>
-      <div className="intensity-step__trigger-options">
-        {TRIGGER_OPTIONS.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            className="intensity-step__trigger-pill"
-            aria-pressed={triggers.includes(option.value)}
-            onClick={() => onTriggerToggle(option.value)}
-          >
-            {i18n._(option.label)}
-          </button>
-        ))}
-      </div>
+      {/* "when do you notice it" is about discomfort: not asked for strong / light */}
+      {usesPainScale(word.id) && (
+        <>
+          <p className="intensity-step__label">
+            <Trans>When do you notice it?</Trans>
+          </p>
+          <div className="intensity-step__trigger-options">
+            {TRIGGER_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className="intensity-step__trigger-pill"
+                aria-pressed={triggers.includes(option.value)}
+                onClick={() => onTriggerToggle(option.value)}
+              >
+                {i18n._(option.label)}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   )
 }

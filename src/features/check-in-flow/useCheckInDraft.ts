@@ -11,6 +11,7 @@ import {
 } from '@/entities/check-in/types'
 import { checkInRepository } from '@/entities/check-in/checkInRepository'
 import { recordCheckIn } from '@/features/usage-stats/usageStats'
+import { usesPainScale } from '@/entities/check-in/vasScale'
 
 /** Holds the in-progress answers for one check-in flow and commits them
  * to the repository once both are picked. Nothing here is saved until commit().
@@ -48,7 +49,8 @@ export const useCheckInDraft = (word: WordCard, date?: string, editing?: CheckIn
         bodyZones,
         intensity,
         energy: energy ?? undefined,
-        triggers: triggers.length > 0 ? triggers : undefined,
+        // strong / light don't ask when it's noticed: drop any answer left from another word
+        triggers: usesPainScale(word.id) && triggers.length > 0 ? triggers : undefined,
         note: note.trim() || undefined,
       }
       if (editing) return await checkInRepository.update(editing.id, payload)

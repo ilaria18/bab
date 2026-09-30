@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { computeResearchMetrics, zoneRegion, type ResearchCheckinRow } from './_researchMetrics'
+import { computeResearchMetrics, POSITIVE_WORD_IDS, WORD_SIGNALS, zoneRegion, type ResearchCheckinRow } from './_researchMetrics'
+import { WORDS } from '../src/entities/word/words'
 
 const checkIn = (participant: string, extra: Partial<ResearchCheckinRow> = {}): ResearchCheckinRow => ({
   participant,
@@ -50,7 +51,7 @@ describe('research metrics', () => {
       checkIn('D', { intensity: 2, energy: 6, on_period: false }),
     ]
     const m = computeResearchMetrics(rows)
-    expect(m.period.yes).toEqual({ checkIns: 3, athletes: 3, meanIntensity: 7, meanEnergy: 2.3, painSharePct: 33 })
+    expect(m.period.yes).toEqual({ checkIns: 3, athletes: 3, meanIntensity: 7, meanEnergy: 2.3, painSharePct: 33, positiveSharePct: 0, alertSharePct: 0 })
     expect(m.period.no).toMatchObject({ checkIns: 1, athletes: 1, meanIntensity: null, meanEnergy: null })
   })
 
@@ -58,5 +59,28 @@ describe('research metrics', () => {
     const m = computeResearchMetrics([checkIn('A'), checkIn('B')])
     expect(m.words).toEqual([])
     expect(m.summary.medianPerAthlete).toBeNull()
+  })
+
+  it('keeps strong / light out of the intensity averages and counts them apart', () => {
+    const rows = [
+      checkIn('A', { intensity: 2 }), checkIn('B', { intensity: 4 }), checkIn('C', { intensity: 6 }),
+      checkIn('A', { word_id: 'strong', word: 'Strong', intensity: 10 }),
+      checkIn('B', { word_id: 'sharp', word: 'Sharp', category: 'pain', intensity: 8 }),
+    ]
+    const m = computeResearchMetrics(rows)
+    expect(m.summary.meanIntensity).toBe(5) // (2 + 4 + 6 + 8) / 4, the 10 of "strong" left out
+    expect(m.summary.positiveSharePct).toBe(20)
+    expect(m.intensity[10].count).toBe(0)
+    expect(m.signals.map((s) => [s.label, s.count])).toEqual([
+      ['Positive', 1],
+      ['Normal (green)', 3],
+      ['Watch (yellow)', 0],
+      ['Warning (red)', 1],
+    ])
+  })
+
+  it('knows the same signals and positive words as the app', () => {
+    expect(WORD_SIGNALS).toEqual(Object.fromEntries(WORDS.map((w) => [w.id, w.signal])))
+    expect([...POSITIVE_WORD_IDS]).toEqual(['strong', 'light'])
   })
 })
