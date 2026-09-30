@@ -5,7 +5,7 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import 'react-day-picker/style.css'
 import { Link, useSearchParams } from 'react-router-dom'
 import { PageFrame } from '@/shared/layout'
-import { Greeting, TabBar } from '@/shared/ui'
+import { Greeting, TabBar, ToggleSwitch } from '@/shared/ui'
 import { toDateKey } from '@/shared/lib/dateKey'
 import { WordShape } from '@/entities/word'
 import { useContent, type WordCard } from '@/i18n'
@@ -14,6 +14,7 @@ import { checkInRepository } from '@/entities/check-in/checkInRepository'
 import type { CheckInEntry } from '@/entities/check-in/types'
 import type { DailyLog } from '@/entities/daily-log/types'
 import { DayLogDialog } from './DayLogDialog'
+import { PatternsView } from '@/features/patterns/PatternsView'
 import { useCalendarMonthData } from './useCalendarMonthData'
 import './CalendarPage.css'
 
@@ -110,6 +111,7 @@ export const CalendarPage = () => {
   const [searchParams] = useSearchParams()
   const initialDate = useMemo(() => parseDateKey(searchParams.get('date')), [searchParams])
 
+  const [view, setView] = useState<'calendar' | 'patterns'>(searchParams.get('view') === 'patterns' ? 'patterns' : 'calendar')
   const [month, setMonth] = useState(initialDate ?? new Date())
   const today = new Date()
   // check-ins can only be added for today or past days: later days can't be picked,
@@ -147,7 +149,18 @@ export const CalendarPage = () => {
           </h1>
         </div>
 
-        <div className="calendar-month">
+        <ToggleSwitch
+          options={[
+            { value: 'calendar', label: t`Calendar` },
+            { value: 'patterns', label: t`My patterns` },
+          ]}
+          value={view}
+          onChange={setView}
+        />
+
+        {view === 'patterns' && <PatternsView />}
+
+        <div className="calendar-month" hidden={view !== 'calendar'}>
           <div className="calendar-month-nav">
             <button
               type="button"
@@ -194,7 +207,7 @@ export const CalendarPage = () => {
         </Link>
       </div>
 
-      {selectedDate && (
+      {selectedDate && view === 'calendar' && (
         <DayLogDialog
           date={selectedDate}
           entries={selectedEntries}

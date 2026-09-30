@@ -40,13 +40,16 @@ export const useCheckInDraft = (word: WordCard, date?: string, editing?: CheckIn
     )
   }
 
+  // strong / light skip the body map: they are about the whole body
+  const zones: BodyZone[] = usesPainScale(word.id) ? bodyZones : ['whole']
+
   const commit = async (): Promise<CheckInEntry | null> => {
-    if (bodyZones.length === 0) return null
+    if (zones.length === 0) return null
     setSaving(true)
     try {
       const payload = {
         wordId: word.id,
-        bodyZones,
+        bodyZones: zones,
         intensity,
         energy: energy ?? undefined,
         // strong / light don't ask when it's noticed: drop any answer left from another word
@@ -63,7 +66,7 @@ export const useCheckInDraft = (word: WordCard, date?: string, editing?: CheckIn
   }
 
   return {
-    bodyZones,
+    bodyZones: zones,
     toggleBodyZone,
     intensity,
     setIntensity,

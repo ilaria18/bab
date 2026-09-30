@@ -48,4 +48,19 @@ describe('CheckInFlow', () => {
     await saveCheckIn({ date: todayKey() })
     expect(window.localStorage.getItem(HEAD_KEY)).toBe('sharp')
   })
+
+  it('skips the body map for strong and light, and saves them for the whole body', async () => {
+    const user = userEvent.setup()
+    const onDone = vi.fn()
+    const strong = wordCardsFor('en').find((card) => card.id === 'strong')!
+    render(<CheckInFlow word={strong} onDone={onDone} onCancel={() => {}} />)
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    expect(screen.getByText('Anything else you want to share?')).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await user.click(screen.getByRole('button', { name: 'Save check-in' }))
+    await waitFor(() => expect(onDone).toHaveBeenCalled())
+    const [saved] = JSON.parse(window.localStorage.getItem('check-ins')!)
+    expect(saved).toMatchObject({ wordId: 'strong', bodyZones: ['whole'] })
+    expect(saved.triggers).toBeUndefined()
+  })
 })

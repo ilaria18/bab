@@ -675,3 +675,179 @@ msgstr "Your data has been deleted from the BAB database."
 #: src/features/data-export
 msgid "Something went wrong. Check your connection and try again."
 msgstr "Something went wrong. Check your connection and try again."
+
+#: src/features/patterns
+msgid "Calendar"
+msgstr "Calendar"
+
+#: src/features/patterns
+msgid "My patterns"
+msgstr "My patterns"
+
+#: src/features/patterns
+msgid "What your check-ins say over time. Only you can see this: it's calculated on your phone."
+msgstr "What your check-ins say over time. Only you can see this: it's calculated on your phone."
+
+#: src/features/patterns
+msgid "Intensity (0–10)"
+msgstr "Intensity (0–10)"
+
+#: src/features/patterns
+msgid "Energy (1–7)"
+msgstr "Energy (1–7)"
+
+#: src/features/patterns
+msgid "My cycle and my body"
+msgstr "My cycle and my body"
+
+#: src/features/patterns
+msgid "On period days your sensations are stronger on average."
+msgstr "On period days your sensations are stronger on average."
+
+#: src/features/patterns
+msgid "On period days your sensations are milder on average."
+msgstr "On period days your sensations are milder on average."
+
+#: src/features/patterns
+msgid "Your sensations are about the same on period days and on the other days."
+msgstr "Your sensations are about the same on period days and on the other days."
+
+#: src/features/patterns
+msgid "Your energy is lower."
+msgstr "Your energy is lower."
+
+#: src/features/patterns
+msgid "Your energy is higher."
+msgstr "Your energy is higher."
+
+#: src/features/patterns
+msgid "Your energy is about the same."
+msgstr "Your energy is about the same."
+
+#: src/features/patterns
+msgid "Other days"
+msgstr "Other days"
+
+#: src/features/patterns
+msgid "The word you use most on period days: {topPeriodWord}."
+msgstr "The word you use most on period days: {topPeriodWord}."
+
+#: src/features/patterns
+msgid "It's your body's rhythm, not a weakness: knowing it helps you plan training and recovery."
+msgstr "It's your body's rhythm, not a weakness: knowing it helps you plan training and recovery."
+
+#: src/features/patterns
+msgid "To compare, you need at least 3 check-ins on period days and 3 on other days. Answer “On period today?” when you check in."
+msgstr "To compare, you need at least 3 check-ins on period days and 3 on other days. Answer “On period today?” when you check in."
+
+#: src/features/patterns
+msgid "My words"
+msgstr "My words"
+
+#: src/features/patterns
+msgid "Your most frequent sensations in the last 30 days."
+msgstr "Your most frequent sensations in the last 30 days."
+
+#: src/features/patterns
+msgid "new this month"
+msgstr "new this month"
+
+#: src/features/patterns
+msgid "more than last month"
+msgstr "more than last month"
+
+#: src/features/patterns
+msgid "less than last month"
+msgstr "less than last month"
+
+#: src/features/patterns
+msgid "After 5 check-ins you'll see your most frequent words here."
+msgstr "After 5 check-ins you'll see your most frequent words here."
+
+#: src/features/patterns
+msgid "The areas that speak most"
+msgstr "The areas that speak most"
+
+#: src/features/patterns
+msgid "{comingBack}: an intense sensation came back on several days this week. Have you talked about it with your coach or physio?"
+msgstr "{comingBack}: an intense sensation came back on several days this week. Have you talked about it with your coach or physio?"
+
+#: src/features/patterns
+msgid "After 5 check-ins you'll see the areas you mark most here."
+msgstr "After 5 check-ins you'll see the areas you mark most here."
+
+#: src/features/patterns
+msgid "Before and after training"
+msgstr "Before and after training"
+
+#: src/features/patterns
+msgid "Add your training days in <0>Settings</0> (Daily reminder → Training and matches) to see how you arrive at your sessions and how you leave them."
+msgstr "Add your training days in <0>Settings</0> (Daily reminder → Training and matches) to see how you arrive at your sessions and how you leave them."
+
+#: src/features/patterns
+msgid "After training your sensations are stronger than before."
+msgstr "After training your sensations are stronger than before."
+
+#: src/features/patterns
+msgid "After training your sensations are milder than before."
+msgstr "After training your sensations are milder than before."
+
+#: src/features/patterns
+msgid "Your sensations are about the same before and after training."
+msgstr "Your sensations are about the same before and after training."
+
+#: src/features/patterns
+msgid "Before"
+msgstr "Before"
+
+#: src/features/patterns
+msgid "After"
+msgstr "After"
+
+#: src/features/patterns
+msgid "The word you use most after training: {topAfterWord}."
+msgstr "The word you use most after training: {topAfterWord}."
+
+#: src/features/patterns
+msgid "Do a check-in before and after 2 training sessions to see the difference."
+msgstr "Do a check-in before and after 2 training sessions to see the difference."
+
+#: src/features/patterns
+msgid "Energy and good days"
+msgstr "Energy and good days"
+
+#: src/features/patterns
+msgid "Your energy in the last 2 weeks is higher than in the 2 before."
+msgstr "Your energy in the last 2 weeks is higher than in the 2 before."
+
+#: src/features/patterns
+msgid "Your energy in the last 2 weeks is lower than in the 2 before."
+msgstr "Your energy in the last 2 weeks is lower than in the 2 before."
+
+#: src/features/patterns
+msgid "Your energy in the last 2 weeks is about the same as in the 2 before."
+msgstr "Your energy in the last 2 weeks is about the same as in the 2 before."
+
+#: src/features/patterns
+msgid "Your average energy in the last 2 weeks."
+msgstr "Your average energy in the last 2 weeks."
+
+#: src/features/patterns
+msgid "Last 2 weeks"
+msgstr "Last 2 weeks"
+
+#: src/features/patterns
+msgid "The 2 before"
+msgstr "The 2 before"
+
+#: src/features/patterns
+msgid "After 3 check-ins with your energy level you'll see how it's changing."
+msgstr "After 3 check-ins with your energy level you'll see how it's changing."
+
+#: src/features/patterns
+msgid "You felt strong or light {positiveCount} times in the last 30 days."
+msgstr "You felt strong or light {positiveCount} times in the last 30 days."
+
+#: src/features/patterns
+msgid "Good sensations count too: when you feel strong or light, note it!"
+msgstr "Good sensations count too: when you feel strong or light, note it!"

@@ -214,3 +214,8 @@
   opacity: 0.35;
   cursor: default;
 }
+
+/* the calendar stays mounted (keeps its month) while "My patterns" is shown */
+.calendar-month[hidden] {
+  display: none;
+}

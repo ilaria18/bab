@@ -1,0 +1,244 @@
+/* Chart colors: the validated pair used by the dashboard (blue / orange), stepped for each theme. */
+.patterns {
+  --pattern-a: #2a78d6;
+  --pattern-b: #eb6834;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-bottom: 16px;
+}
+
+:root[data-theme='dark'] .patterns {
+  --pattern-a: #3987e5;
+  --pattern-b: #d95926;
+}
+
+.patterns__intro {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--color-ink-muted);
+}
+
+.pattern-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border-radius: 24px;
+  background: var(--color-surface-raised);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  letter-spacing: 0;
+}
+
+.pattern-card__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 26px;
+}
+
+.pattern-card__text,
+.pattern-card__note {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.pattern-card__note {
+  font-size: 13px;
+  color: var(--color-ink-muted);
+}
+
+.pattern-card__text a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.pattern-card__alert {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--color-signals);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* waiting for enough data */
+.pattern-waiting {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pattern-waiting__track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--color-overlay);
+  overflow: hidden;
+}
+
+.pattern-waiting__fill {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--pattern-a);
+}
+
+.pattern-waiting__count {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* comparison bars */
+.pattern-compare {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pattern-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--color-ink-muted);
+}
+
+.pattern-legend li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pattern-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.pattern-swatch--a { background: var(--pattern-a); }
+.pattern-swatch--b { background: var(--pattern-b); }
+
+.pattern-compare__group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px; /* surface gap between the two bars */
+}
+
+.pattern-compare__label {
+  margin: 0 0 4px;
+  font-size: 13px;
+  color: var(--color-ink-muted);
+}
+
+.pattern-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 18px;
+}
+
+.pattern-bar__fill {
+  height: 14px;
+  max-width: calc(100% - 44px);
+  border-radius: 0 4px 4px 0;
+}
+
+.pattern-bar__fill--a { background: var(--pattern-a); }
+.pattern-bar__fill--b { background: var(--pattern-b); }
+
+.pattern-bar__value {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink);
+}
+
+/* top words / areas */
+.pattern-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pattern-list__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+}
+
+.pattern-list__shape {
+  position: relative;
+  display: flex;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+/* a small static icon, like in the calendar: no drift / pulse at this size */
+.pattern-list__shape .word-shape,
+.pattern-list__shape .word-shape-path {
+  animation: none;
+}
+
+.pattern-list__name {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.pattern-list__name small {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--color-ink-muted);
+}
+
+.pattern-list__count {
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* same body colors as the body map (BodyLocationStep.css) */
+.pattern-bodies {
+  --body-fill: var(--color-cycle);
+  --body-outline: var(--color-ink);
+  --body-selected: color-mix(in srgb, var(--color-signals) 55%, var(--color-ground));
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  height: 180px;
+}
+
+.pattern-bodies svg {
+  height: 100%;
+  width: auto;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+:root[data-theme='dark'] .pattern-bodies {
+  --body-fill: color-mix(in srgb, var(--color-cycle) 20%, var(--color-surface));
+  --body-outline: color-mix(in srgb, var(--color-cycle) 60%, var(--color-surface));
+  --body-selected: color-mix(in srgb, var(--color-signals) 80%, var(--color-surface));
+}

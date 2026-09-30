@@ -11,6 +11,7 @@ import { BodyLocationStep, IntensityStep, NotesStep, SummaryStep } from './steps
 import { CheckInStepHeader } from './CheckInStepHeader'
 import { IntensityScaleDialog } from './IntensityScaleDialog'
 import { Button } from '@/shared/ui'
+import { usesPainScale } from '@/entities/check-in/vasScale'
 import './CheckInFlow.css'
 
 type Step = 'location' | 'intensity' | 'notes' | 'confirm'
@@ -54,6 +55,10 @@ export const CheckInFlow = ({
   const { saveHeadWord } = useHeadWord()
 
   const wordName = word.word
+  // strong / light describe the whole body, not a spot: no body map for them
+  const asksLocation = usesPainScale(word.id)
+  const previousStep = (current: Step): Step =>
+    current === 'notes' && !asksLocation ? 'intensity' : PREVIOUS_STEP[current]
 
   // the scrolling box is the same element for every step, so it would otherwise
   // carry the previous step's scroll position into the next one
@@ -85,7 +90,7 @@ export const CheckInFlow = ({
       {step !== 'confirm' && (
           <CheckInStepHeader
             title={i18n._(STEP_TITLES[step])}
-            onBack={step === 'intensity' ? onCancel : () => setStep(PREVIOUS_STEP[step])}
+            onBack={step === 'intensity' ? onCancel : () => setStep(previousStep(step))}
           />
         )}
         <div ref={contentRef} className="check-in-flow-content">
@@ -137,7 +142,7 @@ export const CheckInFlow = ({
         {step !== 'confirm' && (
         <div className="check-in-flow-footer">
           {step === 'intensity' && (
-            <Button onClick={() => setStep('location')}>
+            <Button onClick={() => setStep(asksLocation ? 'location' : 'notes')}>
               <Trans>Next</Trans>
             </Button>
           )}
