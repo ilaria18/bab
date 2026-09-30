@@ -63,19 +63,15 @@ export const DataExportSetting = ({ available = !isNativeApp() }: { available?: 
         <Trans>Your data</Trans>
       </span>
       <p className="settings-hint">
-        <Trans>
-          Your check-ins are saved only on this phone: don't delete the app during the pilot. At the
-          end you can send them to the BAB team, without your name.
-        </Trans>
+        <Trans>Saved only on this phone: don't delete the app. Send them to BAB without your name.</Trans>
       </p>
 
       {state === 'confirm' && (
         <>
           <p className="settings-hint">
             <Trans>
-              We will send your check-ins (words, intensity, energy, body areas, notes) and the days
-              of your period and painkillers to the BAB research database, with your code {code} instead
-              of your name. You can delete them from there at any time, here.
+              Your check-ins (notes included) and period and painkiller days go to BAB with the code {code}
+              instead of your name. You can delete them at any time.
             </Trans>
           </p>
           <Button onClick={() => void send()}>

@@ -159,10 +159,7 @@ export const TrainingRoutineSetting = ({ onChange }: { onChange: () => void }) =
       )}
 
       <p className="settings-hint">
-        <Trans>
-          On these days you get a notification 3 hours before and one 2 hours after, instead of the
-          daily reminder. If you leave this empty, you only get the daily reminder.
-        </Trans>
+        <Trans>A notification 3 hours before and 2 hours after, instead of the daily one.</Trans>
       </p>
     </div>
   )

@@ -76,9 +76,7 @@ export const ReminderSetting = ({ available = reminderAvailable() }: { available
           <Trans>Tap “Allow notifications” so BAB can send you the reminder.</Trans>
         ) : status === 'blocked' ? (
           <Trans>Notifications are blocked for BAB. Turn them on in your phone's settings.</Trans>
-        ) : (
-          <Trans>A notification every day at the time you choose.</Trans>
-        )}
+        ) : null}
       </p>
       {settings.enabled && (
         <TrainingRoutineSetting onChange={() => void syncDailyReminder(settings).then(setStatus)} />

@@ -35,11 +35,7 @@ export const UsageStatsSetting = ({
       </span>
       <ToggleSwitch options={options} value={choice} onChange={change} />
       <p className="settings-hint">
-        <Trans>
-          Help us improve BAB: the app only sends how often and for how long it is opened, day by
-          day. Never what you record, never your name, never anything that identifies you or your
-          phone.
-        </Trans>
+        <Trans>Only how often and how long you open the app. Never what you write.</Trans>
       </p>
     </div>
   )

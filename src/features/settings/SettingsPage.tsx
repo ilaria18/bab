@@ -62,16 +62,11 @@ export const SettingsPage = () => {
 
         <DataExportSetting />
 
-        {installStatus !== 'unavailable' && (
+        {installStatus !== 'unavailable' && installStatus !== 'installed' && (
           <div className="settings-section">
             <span className="settings-label">
               <Trans>Install app</Trans>
             </span>
-            {installStatus === 'installed' && (
-              <p className="settings-hint">
-                <Trans>The app is installed on this device.</Trans>
-              </p>
-            )}
             {installStatus === 'prompt' && (
               <Button onClick={install}>
                 <Trans>Install app</Trans>

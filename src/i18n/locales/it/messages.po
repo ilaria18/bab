@@ -407,10 +407,6 @@ msgstr "Tocca il pulsante Condividi nella barra degli strumenti di Safari."
 msgid "Teal"
 msgstr "Verde petrolio"
 
-#: src/features/settings/SettingsPage.tsx:63
-msgid "The app is installed on this device."
-msgstr "L’app è installata su questo dispositivo."
-
 #: src/features/settings/SettingsPage.tsx:51
 msgid "Theme"
 msgstr "Tema"
@@ -529,10 +525,6 @@ msgid "Notifications are blocked for BAB. Turn them on in your phone's settings.
 msgstr "Le notifiche di BAB sono bloccate. Attivale nelle impostazioni del telefono."
 
 #: src/features/reminder
-msgid "A notification every day at the time you choose."
-msgstr "Una notifica ogni giorno all’orario che scegli."
-
-#: src/features/reminder
 msgid "How was today? Take a minute to listen to your body."
 msgstr "Com’è andata oggi? Prenditi un minuto per ascoltare il tuo corpo."
 
@@ -612,10 +604,6 @@ msgstr "Rimuovi"
 msgid "+ Add training or match"
 msgstr "+ Aggiungi allenamento o partita"
 
-#: src/features/reminder
-msgid "On these days you get a notification 3 hours before and one 2 hours after, instead of the daily reminder. If you leave this empty, you only get the daily reminder."
-msgstr "In questi giorni ricevi una notifica 3 ore prima e una 2 ore dopo, al posto del promemoria giornaliero. Se lasci vuoto, ricevi solo il promemoria giornaliero."
-
 #: src/features/data-export
 msgid "Your data"
 msgstr "I tuoi dati"
@@ -631,14 +619,6 @@ msgstr "Invia i miei dati"
 #: src/features/data-export
 msgid "There are no check-ins to send yet."
 msgstr "Non ci sono ancora check-in da inviare."
-
-#: src/features/data-export
-msgid "Your check-ins are saved only on this phone: don't delete the app during the pilot. At the end you can send them to the BAB team, without your name."
-msgstr "I tuoi check-in sono salvati solo su questo telefono: non cancellare l’app durante il pilot. Alla fine potrai inviarli al team BAB, senza il tuo nome."
-
-#: src/features/data-export
-msgid "We will send your check-ins (words, intensity, energy, body areas, notes) and the days of your period and painkillers to the BAB research database, with your code {code} instead of your name. You can delete them from there at any time, here."
-msgstr "Invieremo i tuoi check-in (parole, intensità, energia, zone del corpo, note) e i giorni del ciclo e degli antidolorifici al database di ricerca di BAB, con il tuo codice {code} al posto del nome. Puoi cancellarli da lì in qualsiasi momento, da qui."
 
 #: src/features/data-export
 msgid "Yes, send"
@@ -859,3 +839,19 @@ msgstr "Modifica"
 #: src/features/reminder
 msgid "Save"
 msgstr "Salva"
+
+#: src/features/settings
+msgid "A notification 3 hours before and 2 hours after, instead of the daily one."
+msgstr "Una notifica 3 ore prima e una 2 ore dopo, al posto di quella giornaliera."
+
+#: src/features/settings
+msgid "Only how often and how long you open the app. Never what you write."
+msgstr "Solo quante volte e per quanto tempo apri l’app. Mai cosa scrivi."
+
+#: src/features/settings
+msgid "Saved only on this phone: don't delete the app. Send them to BAB without your name."
+msgstr "Salvati solo su questo telefono: non cancellare l’app. Inviali a BAB senza il tuo nome."
+
+#: src/features/settings
+msgid "Your check-ins (notes included) and period and painkiller days go to BAB with the code {code} instead of your name. You can delete them at any time."
+msgstr "I tuoi check-in (note comprese) e i giorni di ciclo e antidolorifici vanno a BAB con il codice {code} al posto del nome. Puoi cancellarli quando vuoi."
