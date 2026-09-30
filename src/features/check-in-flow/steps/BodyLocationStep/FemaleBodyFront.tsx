@@ -47,6 +47,9 @@ const REGIONS: Region[] = [
   { zone: 'footRight', d: 'M417.0 1161.0L424.0 1163.0L442.5 1162.5L444.0 1182.0L458.5 1223.5L456.5 1229.5L437.5 1234.0L424.5 1234.0L416.0 1229.5L413.0 1222.0L413.0 1213.0L417.5 1187.5L417.0 1161.5Z' },
 ]
 
+/** the zones this view can mark (used by tests: front and back never share one) */
+export const FRONT_ZONES: BodyZone[] = REGIONS.map((region) => region.zone)
+
 export const FemaleBodyFront = ({
   value,
   onToggle,

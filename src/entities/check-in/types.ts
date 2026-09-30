@@ -48,6 +48,27 @@ export type BodyZone =
   | 'footRight'
   | 'heelLeft'
   | 'heelRight'
+  /* the same parts seen from behind (back view): separate zones, so that tapping the
+     front of a knee doesn't also mark the back of it */
+  | 'headBack'
+  | 'trapLeftBack'
+  | 'trapRightBack'
+  | 'shoulderLeftBack'
+  | 'shoulderRightBack'
+  | 'upperArmLeftBack'
+  | 'upperArmRightBack'
+  | 'elbowLeftBack'
+  | 'elbowRightBack'
+  | 'forearmLeftBack'
+  | 'forearmRightBack'
+  | 'wristLeftBack'
+  | 'wristRightBack'
+  | 'handLeftBack'
+  | 'handRightBack'
+  | 'kneeLeftBack'
+  | 'kneeRightBack'
+  | 'ankleLeftBack'
+  | 'ankleRightBack'
   /** not localized to one body part — for words like "foggy" or "dizzy" */
   | 'whole'
 
