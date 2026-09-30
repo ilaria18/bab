@@ -8,7 +8,10 @@
   --tab-bar-ink-muted-on-cycle: color-mix(in srgb, var(--tab-bar-ink-on-cycle) 55%, transparent);
   /* icon + label + top/bottom padding, so other screens can float content
      above the tab bar instead of guessing its rendered height */
-  --tab-bar-height: calc(68px + var(--safe-bottom));
+  /* space under the labels: on iPhone the bar may overlap the home indicator's area a little
+     (Apple's own tab bars do), so only part of the safe area is added; never less than 6px */
+  --tab-bar-bottom: max(6px, calc(var(--safe-bottom) - 16px));
+  --tab-bar-height: calc(52px + var(--tab-bar-bottom));
 }
 
 .tab-bar {
@@ -37,7 +40,7 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 12px 2px calc(12px + var(--safe-bottom));
+  padding: 8px 2px var(--tab-bar-bottom);
   color: var(--tab-bar-ink-muted-on-cycle);
   text-decoration: none;
 }
@@ -57,7 +60,7 @@
   white-space: nowrap;
   text-overflow: ellipsis;
   /* 12px on normal phones, down to 10px on the narrowest ones */
-  font-size: clamp(10px, 3.1vw, 12px);
+  font-size: clamp(10px, 2.8vw, 12px);
   font-weight: 500;
   line-height: 16px;
 }
