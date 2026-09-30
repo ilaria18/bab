@@ -682,7 +682,7 @@ msgstr "Calendario"
 
 #: src/features/patterns
 msgid "My patterns"
-msgstr "I miei schemi"
+msgstr "I miei ritmi"
 
 #: src/features/patterns
 msgid "What your check-ins say over time. Only you can see this: it's calculated on your phone."
