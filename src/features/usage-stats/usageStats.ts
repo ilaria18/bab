@@ -14,10 +14,6 @@ import { safeStorage } from '@/shared/lib/safeStorage'
  * daily/weekly active users and weekly retention without ever being able to link two rows to
  * the same person.
  *
- * Once a week the phone also sends one summary row: in how many days (as a band: 1-2, 3-4, 5-7)
- * the app was used the week before. That shows how use is spread across the team ("4 athletes
- * almost daily, 6 twice a week") without following anyone.
- *
  * What the athlete records (words, body zones, intensity, notes) is never read here — only how
  * many check-ins were completed during a visit.
  * Nothing is collected or sent until setUsageConsent(true) has been called.
@@ -54,20 +50,8 @@ export type UsageEvent = {
   reminder_on: boolean
 }
 
-export type ActiveDaysBand = '1-2' | '3-4' | '5-7'
-
-/** Sent once, at the first visit of a new week, about the last week the app was used. */
-export type WeekSummary = {
-  v: 3
-  kind: 'week'
-  /** ISO week the summary is about, e.g. 2026-W40 */
-  week: string
-  /** in how many different days of that week the app was used */
-  active_days: ActiveDaysBand
-  platform: AppPlatform
-}
-
-export type UsageRow = UsageEvent | WeekSummary
+/** what goes to the server: only visit rows (older versions also sent a weekly summary) */
+export type UsageRow = UsageEvent
 
 type State = {
   consent: boolean
@@ -76,9 +60,6 @@ type State = {
   lastWeek: string | null
   lastLifeWeek: number | null
   lastHiddenAt: number | null
-  /** calendar week being counted for the weekly summary, and the days of it with a visit */
-  activeWeek: string | null
-  activeDays: string[]
   queue: UsageRow[]
 }
 
@@ -98,8 +79,6 @@ const emptyState = (): State => ({
   lastWeek: null,
   lastLifeWeek: null,
   lastHiddenAt: null,
-  activeWeek: null,
-  activeDays: [],
   queue: [],
 })
 
@@ -116,8 +95,6 @@ const saveState = (state: State) => safeStorage.setItem(STORAGE_KEY, JSON.string
 
 export const isoWeekKey = (date: Date): string =>
   `${getISOWeekYear(date)}-W${String(getISOWeek(date)).padStart(2, '0')}`
-
-export const activeDaysBand = (days: number): ActiveDaysBand => (days <= 2 ? '1-2' : days <= 4 ? '3-4' : '5-7')
 
 export const getUsageConsent = (): boolean => loadState().consent
 
@@ -260,14 +237,6 @@ export const startUsageStats = ({
       reminder_on: reminderOn,
     }
 
-    // a new week has started: report how many days the previous active week had
-    const summaries: WeekSummary[] =
-      state.activeWeek !== null && state.activeWeek !== week && state.activeDays.length > 0
-        ? [{ v: 3, kind: 'week', week: state.activeWeek, active_days: activeDaysBand(state.activeDays.length), platform }]
-        : []
-    const activeDays =
-      state.activeWeek === week ? Array.from(new Set([...state.activeDays, day])) : [day]
-
     saveState({
       ...state,
       firstDay,
@@ -275,9 +244,7 @@ export const startUsageStats = ({
       lastWeek: week,
       lastLifeWeek: lifeWeek,
       lastHiddenAt: endedAt,
-      activeWeek: week,
-      activeDays,
-      queue: [...state.queue, ...summaries, event].slice(-MAX_QUEUE),
+      queue: [...state.queue.filter((row) => !('kind' in row)), event].slice(-MAX_QUEUE),
     })
     void flush()
   }

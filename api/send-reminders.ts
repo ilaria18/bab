@@ -6,7 +6,7 @@ import { sendPush, type VapidKeys } from './_webpush.js'
 /**
  * Sends the web app's reminders that are due: the daily one, or on training/match days the
  * notifications 3 hours before and 2 hours after the session. Called every 5 minutes by a scheduled job
- * in Supabase (analytics/reminder-cron.sql) with  Authorization: Bearer <CRON_SECRET>.
+ * in Supabase (analytics/setup.sql) with  Authorization: Bearer <CRON_SECRET>.
  * Each reminder goes out once a day, at the first call from its time on (within an hour).
  *
  * Environment variables: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, CRON_SECRET,
@@ -14,6 +14,8 @@ import { sendPush, type VapidKeys } from './_webpush.js'
  */
 
 const STALE_DAYS = 60
+/** enough to decide whether anything is due (see dueReminders) */
+const WHEN_COLUMNS = 'endpoint,remind_at,time_zone,last_sent_day,slots,session_days,sent_keys'
 
 const authorized = (request: Request) => {
   const expected = process.env.CRON_SECRET
@@ -38,13 +40,26 @@ const run = async (request: Request): Promise<Response> => {
   const cutoff = new Date(Date.now() - STALE_DAYS * 86_400_000).toISOString()
   await supabase(`${TABLE}?updated_at=lt.${cutoff}`, { method: 'DELETE' })
 
-  const response = await supabase(`${TABLE}?select=*`)
-  if (!response.ok) {
-    console.error('Could not read the reminders', response.status, await response.text())
+  // Runs every 5 minutes: first only the columns that say *when* (no keys, no texts), then the
+  // full rows of the few phones with something due. Keeps the database's outgoing traffic small.
+  const now = new Date()
+  const light = await supabase(`${TABLE}?select=${WHEN_COLUMNS}`)
+  if (!light.ok) {
+    console.error('Could not read the reminders', light.status, await light.text())
     return json(502, { error: 'database' })
   }
-  const rows = (await response.json()) as ReminderRow[]
-  const now = new Date()
+  const checked = (await light.json()) as ReminderRow[]
+  const dueEndpoints = checked.filter((row) => dueReminders(row, now).due.length > 0).map((row) => row.endpoint)
+  const rows: ReminderRow[] = []
+  for (let i = 0; i < dueEndpoints.length; i += 20) {
+    const list = dueEndpoints.slice(i, i + 20).map((e) => `"${e.replace(/"/g, '')}"`).join(',')
+    const full = await supabase(`${TABLE}?select=*&endpoint=in.(${encodeURIComponent(list)})`)
+    if (!full.ok) {
+      console.error('Could not read the due reminders', full.status, await full.text())
+      return json(502, { error: 'database' })
+    }
+    rows.push(...((await full.json()) as ReminderRow[]))
+  }
   const byEndpoint = (row: ReminderRow) => `${TABLE}?endpoint=eq.${encodeURIComponent(row.endpoint)}`
 
   let sent = 0
@@ -83,7 +98,7 @@ const run = async (request: Request): Promise<Response> => {
       await supabase(byEndpoint(row), { method: 'PATCH', body: JSON.stringify(patch) })
     }),
   )
-  return json(200, { checked: rows.length, sent, removed, failed })
+  return json(200, { checked: checked.length, due: rows.length, sent, removed, failed })
 }
 
 export const GET = run

@@ -25,7 +25,7 @@ export type ReminderRow = {
   title: string
   body: string
   last_sent_day: string | null
-  /** weekly routine (migration 004): empty/null = daily reminder only */
+  /** weekly training/match routine: empty/null = daily reminder only */
   slots?: Slot[] | null
   session_days?: number[] | null
   texts?: Partial<Record<SlotType, Text>> | null

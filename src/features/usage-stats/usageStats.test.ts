@@ -8,7 +8,6 @@ import {
   usageStatsCounted,
   type UsageEvent,
   type UsageRow,
-  type WeekSummary,
 } from './usageStats'
 
 const setVisibility = (state: 'visible' | 'hidden') => {
@@ -22,7 +21,6 @@ describe('usage stats', () => {
   let clock = 0
   let rows: UsageRow[] = []
   let sent: UsageEvent[] = []
-  let weeks: WeekSummary[] = []
   let stop = () => {}
 
   const start = () => {
@@ -32,8 +30,7 @@ describe('usage stats', () => {
       now: () => clock,
       send: async (_endpoint, events) => {
         rows.push(...events)
-        sent = rows.filter((row): row is UsageEvent => !('kind' in row))
-        weeks = rows.filter((row): row is WeekSummary => 'kind' in row)
+        sent = rows
         return true
       },
     })
@@ -50,7 +47,6 @@ describe('usage stats', () => {
   beforeEach(() => {
     rows = []
     sent = []
-    weeks = []
     recordReminderActive(false)
     Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' })
   })
@@ -167,24 +163,6 @@ describe('usage stats', () => {
     expect(sent.map((e) => [e.from_reminder, e.reminder_on])).toEqual([
       [true, true],
       [false, true],
-    ])
-  })
-
-  it('sends one summary per week with the number of days of use as a band', async () => {
-    setUsageConsent(true)
-    start()
-    // week 40: Monday, Monday again, Wednesday, Friday → 3 days
-    await visit('2026-09-28T10:00:00', 30)
-    await visit('2026-09-28T18:00:00', 30)
-    await visit('2026-09-30T10:00:00', 30)
-    await visit('2026-10-02T10:00:00', 30)
-    expect(weeks).toEqual([])
-    // first visit of week 41 reports week 40; skipping week 42, week 43 reports week 41
-    await visit('2026-10-05T10:00:00', 30)
-    await visit('2026-10-19T10:00:00', 30)
-    expect(weeks).toEqual([
-      { v: 3, kind: 'week', week: '2026-W40', active_days: '3-4', platform: 'web' },
-      { v: 3, kind: 'week', week: '2026-W41', active_days: '1-2', platform: 'web' },
     ])
   })
 

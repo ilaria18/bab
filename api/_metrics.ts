@@ -1,6 +1,5 @@
 /**
- * The pilot's metrics, computed from the rows of usage_visits and usage_weeks.
- * Same definitions as analytics/metrics.sql, so the dashboard and the SQL queries always agree.
+ * The pilot's metrics, computed from the rows of usage_visits (analytics/setup.sql).
  *
  * Every figure that describes "per athlete" behaviour, or that is computed over fewer than
  * MIN_GROUP athletes, comes back as null: with a single team, small groups would let someone
@@ -28,8 +27,6 @@ export type VisitRow = {
   from_reminder: boolean | null
   reminder_on: boolean | null
 }
-
-export type WeekRow = { week: string; active_days: string; platform: string }
 
 const DAY_MS = 86_400_000
 const toTime = (day: string) => Date.parse(`${day}T00:00:00Z`)
@@ -87,10 +84,9 @@ const totalsOf = (rows: VisitRow[], firstFlag: 'first_of_day' | 'first_of_week')
 
 export type PilotMetrics = ReturnType<typeof computeMetrics>
 
-export const computeMetrics = (start: string, allVisits: VisitRow[], allWeeks: WeekRow[], platform: string | null) => {
+export const computeMetrics = (start: string, allVisits: VisitRow[], platform: string | null) => {
   const end = addDays(start, PILOT_DAYS)
   const visits = allVisits.filter((r) => r.day >= start && r.day < end && (!platform || r.platform === platform))
-  const weeksRows = allWeeks.filter((r) => !platform || r.platform === platform)
   const pilotWeekOf = (day: string) => Math.floor(daysBetween(start, day) / 7) + 1
 
   const days = Array.from({ length: PILOT_DAYS }, (_, i) => {
@@ -127,7 +123,6 @@ export const computeMetrics = (start: string, allVisits: VisitRow[], allWeeks: W
       reminderOnPct: t.usersReminderKnown >= MIN_GROUP ? pct(t.usersWithReminder, t.usersReminderKnown) : null,
       minutesPerOpening: t.openings > 0 ? round1(t.seconds / 60 / t.openings) : null,
       minutesPerUser: perAthlete(t.seconds / 60, t.activeUsers),
-      rawActiveUsers: t.activeUsers, // used below, removed before sending
     }
   })
 
@@ -145,22 +140,6 @@ export const computeMetrics = (start: string, allVisits: VisitRow[], allWeeks: W
       stillActive,
       retentionPct: ok ? pct(stillActive, started) : null,
       churnPct: ok ? 100 - (pct(stillActive, started) ?? 0) : null,
-    }
-  })
-
-  // how use is spread across the team, from the weekly summaries
-  const spread = weeks.map((w) => {
-    const key = isoWeek(w.from)
-    const reports = weeksRows.filter((r) => r.week === key)
-    const count = (band: string) => reports.filter((r) => r.active_days === band).length
-    const ok = reports.length >= MIN_GROUP
-    return {
-      pilotWeek: w.pilotWeek,
-      days1to2: ok ? count('1-2') : null,
-      days3to4: ok ? count('3-4') : null,
-      days5to7: ok ? count('5-7') : null,
-      reported: reports.length,
-      notReported: w.rawActiveUsers >= MIN_GROUP ? Math.max(w.rawActiveUsers - reports.length, 0) : null,
     }
   })
 
@@ -203,9 +182,8 @@ export const computeMetrics = (start: string, allVisits: VisitRow[], allWeeks: W
     minGroup: MIN_GROUP,
     summary,
     days,
-    weeks: weeks.map(({ rawActiveUsers: _omit, ...w }) => w),
+    weeks,
     retention,
-    spread,
     lengths,
   }
 }

@@ -9,7 +9,7 @@ import { json, supabase } from './_reminders.js'
  * POST    { code, token, consentVersion, rows }  stores her rows, replacing what she sent before
  * DELETE  { code, token }                        deletes everything she sent
  *
- * Tables (analytics/migrations/005-research-data.sql): research_participants, research_checkins.
+ * Tables (analytics/setup.sql): research_participants, research_checkins.
  * No name, no contact, no IP or device id is stored: `code` is a random 6-character code made on
  * the phone. `token` is a secret only that phone has; only its SHA-256 is stored, and every
  * replace/delete must present it, so nobody else can overwrite or erase an athlete's data.

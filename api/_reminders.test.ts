@@ -115,7 +115,9 @@ describe('reminder endpoints', () => {
     ]
     vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
       calls.push({ url, init })
-      if (url.includes('select=*')) return Response.json(rows)
+      // first only the "when" columns of every phone, then the full rows of the due ones
+      if (url.includes('select=endpoint,')) return Response.json(rows.map(({ p256dh: _k, auth: _a, title: _t, body: _b, ...when }) => when))
+      if (url.includes('select=*')) return Response.json(rows.filter((r) => decodeURIComponent(url).includes(`"${r.endpoint}"`)))
       if (url.endsWith('/gone')) return new Response(null, { status: 410 })
       return new Response(null, { status: 201 })
     }))
@@ -124,7 +126,9 @@ describe('reminder endpoints', () => {
     const response = await sendReminders(
       new Request('https://app.test/api/send-reminders', { method: 'POST', headers: { Authorization: 'Bearer cron-secret' } }),
     )
-    expect(await response.json()).toEqual({ checked: 3, sent: 1, removed: 1, failed: 0 })
+    expect(await response.json()).toEqual({ checked: 3, due: 2, sent: 1, removed: 1, failed: 0 })
+    const fullRead = calls.find((c) => c.url.includes('select=*'))!
+    expect(decodeURIComponent(fullRead.url)).not.toContain('/later') // not due: keys and texts never read
 
     const pushed = calls.find((c) => c.url === 'https://web.push.apple.com/due')!
     expect((pushed.init?.headers as Record<string, string>)['Content-Encoding']).toBe('aes128gcm')

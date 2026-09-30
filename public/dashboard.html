@@ -187,10 +187,9 @@
         </article>
 
         <article class="card">
-          <h2>Days of use per week</h2>
-          <p class="sub">Athletes by number of days they used the app, week by week (from the weekly summaries).</p>
-          <ul class="legend" id="legend-spread"></ul>
-          <div class="chart" id="chart-spread"></div>
+          <h2>Visit length</h2>
+          <p class="sub">Openings by length, and the share that ends with a check-in.</p>
+          <div class="chart" id="chart-lengths"></div>
         </article>
 
         <article class="card wide">
@@ -199,13 +198,7 @@
           <div class="scroll" id="table-weeks"></div>
         </article>
 
-        <article class="card">
-          <h2>Visit length</h2>
-          <p class="sub">Openings by length, and the share that ends with a check-in.</p>
-          <div class="chart" id="chart-lengths"></div>
-        </article>
-
-        <article class="card">
+        <article class="card wide">
           <h2>Daily data</h2>
           <p class="sub">The full table, day by day.</p>
           <details>
@@ -455,53 +448,6 @@
     })
   }
 
-  const SPREAD = [
-    { key: 'days5to7', label: '5–7 days', color: 'var(--band-high)' },
-    { key: 'days3to4', label: '3–4 days', color: 'var(--band-mid)' },
-    { key: 'days1to2', label: '1–2 days', color: 'var(--band-low)' },
-    { key: 'notReported', label: 'Stopped / not yet reported', color: 'var(--none)' },
-  ]
-  const drawSpread = () => {
-    const legend = $('legend-spread')
-    legend.replaceChildren(...SPREAD.map((s) => {
-      const li = el('li'); const i = el('i'); i.style.background = s.color
-      li.append(i, document.createTextNode(s.label)); return li
-    }))
-    const container = $('chart-spread')
-    const card = container.closest('.card')
-    const weeks = data.spread
-    const totals = weeks.map((w) => SPREAD.reduce((sum, s) => sum + (w[s.key] ?? 0), 0))
-    const yMax = niceMax(Math.max(...totals, 1))
-    const { svg, plot, y } = frame(container, 220, yMax, 4, (v) => Math.round(v), { left: 32, right: 8, top: 10, bottom: 28 })
-    const band = (plot.right - plot.left) / weeks.length
-    const w = Math.min(24, band * 0.6)
-    weeks.forEach((wk, i) => {
-      const cx = plot.left + band * i + band / 2
-      const t = svgEl('text', { x: cx, y: plot.bottom + 16, 'text-anchor': 'middle' }, svg)
-      t.textContent = `Week ${wk.pilotWeek}`
-      const segments = SPREAD.filter((s) => (wk[s.key] ?? 0) > 0)
-      let base = 0
-      segments.forEach((s, j) => {
-        const v = wk[s.key]
-        const top = y(base + v)
-        const bottom = y(base) - (j > 0 ? 2 : 0) // 2px surface gap between segments
-        const h = Math.max(bottom - top, 1)
-        const isTop = j === segments.length - 1
-        svgEl('path', { d: isTop ? columnPath(cx - w / 2, top, w, h) : `M${cx - w / 2},${top}h${w}v${h}h${-w}Z`, fill: s.color }, svg)
-        base += v
-      })
-      if (wk.days1to2 === null && wk.notReported === null) {
-        const t2 = svgEl('text', { x: cx, y: plot.bottom - 6, 'text-anchor': 'middle' }, svg)
-        t2.textContent = '—'
-      }
-      const hit = svgEl('rect', { x: plot.left + band * i, y: plot.top, width: band, height: plot.bottom - plot.top, class: 'hit', tabindex: 0 }, svg)
-      hover(hit, card, `Week ${wk.pilotWeek}`, [
-        ...SPREAD.map((s) => [s.label.toLowerCase(), fmt(wk[s.key])]),
-        ['summaries received', fmt(wk.reported)],
-      ])
-    })
-  }
-
   const drawLengths = () => {
     const container = $('chart-lengths')
     const card = container.closest('.card')
@@ -567,7 +513,6 @@
     )
     drawDays()
     drawRetention()
-    drawSpread()
     drawLengths()
     table($('table-weeks'),
       ['Week', 'Active athletes', 'Openings', 'Openings / athlete', 'Days of use / athlete', 'Check-ins', 'Check-ins / athlete', 'From reminder', 'Reminder on', 'Min / opening', 'Min / athlete'],

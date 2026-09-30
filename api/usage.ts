@@ -1,7 +1,7 @@
 /**
- * Receives the anonymous rows sent by src/features/usage-stats/usageStats.ts — one per visit, plus
- * one weekly summary per phone — and stores them in the `usage_visits` and `usage_weeks` tables
- * (analytics/schema.sql) through Supabase's REST API.
+ * Receives the anonymous rows sent by src/features/usage-stats/usageStats.ts — one per visit — and
+ * stores them in the `usage_visits` table (analytics/setup.sql) through Supabase's REST API.
+ * (Weekly summary rows sent by older versions of the app are dropped.)
  *
  * The row is rebuilt field by field, so nothing the client adds on top — and nothing about the
  * request itself (IP address, user agent, headers) — ever reaches the database. The insert is
@@ -34,14 +34,6 @@ type Row = {
   from_reminder: boolean | null
   reminder_on: boolean | null
 }
-
-type WeekRow = {
-  week: string
-  active_days: string
-  platform: string
-}
-
-const BANDS = ['1-2', '3-4', '5-7']
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/
 const WEEK = /^\d{4}-W\d{2}$/
@@ -79,16 +71,6 @@ const toRow = (input: unknown): Row | null => {
     from_reminder: v3 ? (e.from_reminder as boolean) : null,
     reminder_on: v3 ? (e.reminder_on as boolean) : null,
   }
-}
-
-const toWeekRow = (input: unknown): WeekRow | null => {
-  if (typeof input !== 'object' || input === null) return null
-  const e = input as Record<string, unknown>
-  if (e.v !== 3 || e.kind !== 'week') return null
-  if (typeof e.week !== 'string' || !WEEK.test(e.week)) return null
-  if (typeof e.active_days !== 'string' || !BANDS.includes(e.active_days)) return null
-  if (typeof e.platform !== 'string' || !PLATFORMS.includes(e.platform)) return null
-  return { week: e.week, active_days: e.active_days, platform: e.platform }
 }
 
 /** Inserts rows into a table; false when Supabase refuses (the reason goes to the logs). */
@@ -144,8 +126,7 @@ export async function POST(request: Request): Promise<Response> {
     console.error('SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set for this deployment')
     return new Response(null, { status: 503, headers })
   }
-  const weekRows = events.map(toWeekRow).filter((row): row is WeekRow => row !== null)
-  const ok = (await insert('usage_visits', rows)) && (await insert('usage_weeks', weekRows))
+  const ok = await insert('usage_visits', rows)
   // 5xx makes the app keep the rows and try again at the next opening
   if (!ok) return new Response(null, { status: 502, headers })
   // malformed rows are dropped rather than retried forever

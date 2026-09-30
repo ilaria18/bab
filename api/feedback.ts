@@ -9,7 +9,7 @@ import { json, supabase } from './_reminders.js'
  * GET  ?start=YYYY-MM-DD  + Authorization: Bearer <DASHBOARD_PASSWORD>
  *                                                  the messages for the dashboard, newest first
  *
- * Stored in `feedback` (analytics/migrations/006-feedback.sql) with only the day it arrived:
+ * Stored in `feedback` (analytics/setup.sql) with only the day it arrived:
  * no time, no name, no participant code, no IP or device id.
  */
 
