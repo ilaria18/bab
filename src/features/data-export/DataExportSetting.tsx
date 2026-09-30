@@ -3,6 +3,7 @@ import { Trans, useLingui } from '@lingui/react/macro'
 import { checkInRepository } from '@/entities/check-in/checkInRepository'
 import { dailyLogRepository } from '@/entities/daily-log/dailyLogRepository'
 import { wordCardsFor } from '@/i18n'
+import { getTrainingRoutine } from '@/features/reminder/trainingRoutine'
 import { isNativeApp } from '@/shared/lib/platform'
 import { Button } from '@/shared/ui'
 import { buildRows, deleteResearchData, lastSentAt, participantCode, sendResearchData } from './researchData'
@@ -34,7 +35,7 @@ export const DataExportSetting = ({ available = !isNativeApp() }: { available?: 
         setState('empty')
         return
       }
-      await sendResearchData(rows)
+      await sendResearchData(rows, getTrainingRoutine())
       setSentAt(lastSentAt())
       setState('sent')
     } catch (error) {
@@ -70,8 +71,8 @@ export const DataExportSetting = ({ available = !isNativeApp() }: { available?: 
         <>
           <p className="settings-hint">
             <Trans>
-              Your check-ins (notes included) and period and painkiller days go to BAB with the code {code}
-              instead of your name. You can delete them at any time.
+              Your check-ins (notes included), your period and painkiller days and your training and match times
+              go to BAB with the code {code} instead of your name. You can delete them at any time.
             </Trans>
           </p>
           <Button onClick={() => void send()}>

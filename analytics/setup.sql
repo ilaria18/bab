@@ -85,8 +85,10 @@ create table if not exists research_participants (
   token_hash       text not null,
   consent_version  text not null,                    -- which consent text she confirmed
   consented_at     timestamptz not null default now(),
-  updated_at       timestamptz not null default now()
+  updated_at       timestamptz not null default now(),
+  routine          jsonb not null default '[]'           -- weekly training/match sessions: [{ day, kind, start, end }]
 );
+alter table research_participants add column if not exists routine jsonb not null default '[]';
 create table if not exists research_checkins (
   participant      text not null references research_participants(code) on delete cascade,
   record_id        text not null,                    -- the check-in's id on the phone, or 'day-YYYY-MM-DD'

@@ -228,58 +228,52 @@
     <div id="research" role="tabpanel" aria-labelledby="tab-research" hidden>
       <div class="kpis" id="r-kpis"></div>
       <div class="grid">
+        <article class="card wide">
+          <h2>1 · Body literacy</h2>
+          <p class="sub" id="r-literacy-sub">Each athlete compared with herself: her first check-ins against her latest ones.</p>
+          <ul class="legend" id="r-literacy-legend"></ul>
+          <div class="chart" id="r-literacy"></div>
+        </article>
+
         <article class="card">
-          <h2>Most used words</h2>
-          <p class="sub">Check-ins per word, with the average intensity (0–10; for strong and light it means how strong or light). Hover for details.</p>
+          <h2>2 · What they feel</h2>
+          <p class="sub">Words by number of athletes who used them (not by check-ins), with the app's signal.</p>
           <div class="chart" id="r-words"></div>
         </article>
         <article class="card">
-          <h2>Body areas</h2>
-          <p class="sub">Check-ins that mark each area (left and right together; front and back apart).</p>
+          <h2>Where and when</h2>
+          <p class="sub">Body areas and moments of the symptoms, by number of athletes (left and right together).</p>
           <div class="chart" id="r-zones"></div>
+          <div class="chart" id="r-moments" style="margin-top:16px"></div>
+        </article>
+
+        <article class="card">
+          <h2>3 · Cycle</h2>
+          <p class="sub">Each athlete's period days compared with her own other days (at least 2 check-ins in each).</p>
+          <ul class="legend" id="r-cycle-legend"></ul>
+          <div class="chart" id="r-cycle"></div>
+          <p class="sub" id="r-painkiller" style="margin-top:12px"></p>
         </article>
         <article class="card">
-          <h2>Intensity</h2>
-          <p class="sub">Symptom check-ins at each intensity, from 0 (nothing) to 10 (the worst). Strong and light are not included.</p>
-          <div class="chart" id="r-intensity"></div>
+          <h2>4 · Training</h2>
+          <p class="sub" id="r-training-sub">Check-ins placed around each athlete's weekly routine (up to 4 h before or after a session).</p>
+          <div class="chart" id="r-moments-training"></div>
+          <ul class="legend" id="r-training-legend" style="margin-top:16px"></ul>
+          <div class="chart" id="r-training"></div>
         </article>
-        <article class="card">
-          <h2>On period days vs other days</h2>
-          <p class="sub">By the athlete's answer for that day: average symptom intensity, energy, share of positive check-ins (strong, light) and of yellow/red symptoms.</p>
-          <ul class="legend" id="r-period-legend"></ul>
-          <div class="chart" id="r-period"></div>
-        </article>
-        <article class="card">
-          <h2>Kind of sensation</h2>
-          <p class="sub">Check-ins by word category, with the average symptom intensity (strong and light count in “muscle” but not in its average).</p>
-          <div class="chart" id="r-categories"></div>
-        </article>
-        <article class="card">
-          <h2>Signal</h2>
-          <p class="sub">Positive words, and symptoms by the app's signal: green = normal for an athlete, yellow = keep an eye on it, red = warning. With the average symptom intensity.</p>
-          <div class="chart" id="r-signals"></div>
-        </article>
-        <article class="card">
-          <h2>When it shows up</h2>
-          <p class="sub">Symptom check-ins by moment (more than one can apply; not asked for strong and light).</p>
-          <div class="chart" id="r-triggers"></div>
-        </article>
+
         <article class="card wide">
-          <h2>Check-ins per week</h2>
-          <p class="sub">Week by week (weeks start on Monday). Hover for athletes and average intensity.</p>
-          <div class="chart" id="r-weeks"></div>
-        </article>
-        <article class="card wide">
-          <h2>Period and painkillers</h2>
-          <p class="sub">The check-ins grouped by the athlete's answers for that day.</p>
-          <div class="scroll" id="r-table"></div>
+          <h2>5 · Data for a future model</h2>
+          <p class="sub" id="r-coverage-sub">Share of days with at least one record, from each athlete's first day to the last day anyone sent data.</p>
+          <div class="chart" id="r-coverage"></div>
         </article>
       </div>
       <p class="notice">
-        Only check-ins the athletes chose to send (Settings → Your data). Intensity averages cover symptoms only: for the
-        positive words (strong, light) intensity means how strong or light, so they are counted apart. A word, body area or group is shown only when
-        at least 3 different athletes are in it — the rest is under “Other” or <b>—</b>. Notes are not shown here: they
-        are only in the database (Supabase → research_checkins). With “Pilot start” set, only the 35 pilot days count.
+        Only data the athletes chose to send (Settings → Your data). A <b>good day</b> is a day with only “strong” or
+        “light”; a day with no check-in is unknown, not a good day. Intensity averages cover symptoms only. Every figure
+        needs at least 3 different athletes — otherwise it shows <b>—</b> or goes under “Other”. The training routine is
+        the weekly plan the athlete entered, not a record of the sessions actually done. Notes are never shown here.
+        With “Pilot start” set, only the 35 pilot days count.
         <span id="r-status"></span>
       </p>
     </div>
@@ -614,97 +608,132 @@
     })
   }
 
-  const PERIOD = [
-    { key: 'yes', label: 'On period', color: 'var(--series-2)' },
-    { key: 'no', label: 'Other days', color: 'var(--series)' },
+  /** within-athlete comparisons: one row per measure, split into up / same / down athletes */
+  const SPLIT = [
+    { key: 'up', color: 'var(--series)' },
+    { key: 'same', color: 'var(--none)' },
+    { key: 'down', color: 'var(--series-2)' },
   ]
-  /** two bars per measure (period / other days), each measure on its own scale */
-  const drawPeriod = () => {
-    const legend = $('r-period-legend')
-    legend.replaceChildren(...PERIOD.map((s) => {
-      const li = el('li'); const i = el('i'); i.style.background = s.color
-      li.append(i, document.createTextNode(s.label)); return li
+  const split = (container, legendEl, names, rows) => {
+    legendEl.replaceChildren(...SPLIT.map((s, i) => {
+      const li = el('li'); const dot = el('i'); dot.style.background = s.color
+      li.append(dot, document.createTextNode(names[i])); return li
     }))
-    const container = $('r-period')
     const card = container.closest('.card')
     container.replaceChildren()
-    const p = research.period
-    if (p.yes.meanIntensity === null || p.no.meanIntensity === null) {
-      emptyChart(container, 'Needs check-ins from at least 3 athletes on period days and 3 on other days.')
-      return
-    }
-    const measures = [
-      { label: 'Intensity (0–10)', key: 'meanIntensity', max: 10 },
-      { label: 'Energy (1–7)', key: 'meanEnergy', max: 7 },
-      { label: 'Positive (%)', key: 'positiveSharePct', max: 100 },
-      { label: 'Yellow/red (%)', key: 'alertSharePct', max: 100 },
-    ]
     const width = Math.max(container.clientWidth, 280)
-    const labelW = 124, valueW = 40, barH = 16, gap = 2, blockH = 2 * barH + gap + 22
-    const svg = svgEl('svg', { viewBox: `0 0 ${width} ${measures.length * blockH}`, height: measures.length * blockH, role: 'img' }, container)
-    measures.forEach((m, mi) => {
-      const top = mi * blockH
-      const t = svgEl('text', { x: 0, y: top + barH + 4, class: 'label' }, svg)
-      t.textContent = m.label
-      PERIOD.forEach((s, si) => {
-        const value = p[s.key][m.key]
-        const yTop = top + si * (barH + gap)
-        const len = value === null ? 0 : Math.max(((width - labelW - valueW) * value) / m.max, 2)
-        const r = Math.min(4, len), x = labelW
-        if (len > 0) svgEl('path', {
-          d: `M${x},${yTop}H${x + len - r}Q${x + len},${yTop} ${x + len},${yTop + r}V${yTop + barH - r}Q${x + len},${yTop + barH} ${x + len - r},${yTop + barH}H${x}Z`,
-          fill: s.color,
-        }, svg)
-        const v = svgEl('text', { x: x + len + 6, y: yTop + barH - 4, class: 'label' }, svg)
-        v.textContent = fmt(value)
-        const hit = svgEl('rect', { x: 0, y: yTop, width, height: barH + gap, class: 'hit', tabindex: 0 }, svg)
-        hover(hit, card, `${s.label} · ${m.label}`, [
-          ['average', fmt(value)],
-          ['check-ins', fmt(p[s.key].checkIns)],
-          ['athletes', fmt(p[s.key].athletes)],
-        ])
+    // narrow screens: the median goes on its own line under the label
+    const narrow = width < 560
+    const rowH = narrow ? 70 : 54, barH = 18, barY = narrow ? 36 : 20
+    const svg = svgEl('svg', { viewBox: `0 0 ${width} ${rows.length * rowH}`, height: rows.length * rowH, role: 'img' }, container)
+    rows.forEach((row, i) => {
+      const top = i * rowH
+      const t = svgEl('text', { x: 0, y: top + 13, class: 'label' }, svg)
+      const d = row.data
+      t.textContent = row.label
+      const note = svgEl('text', narrow ? { x: 0, y: top + 29 } : { x: width, y: top + 13, 'text-anchor': 'end' }, svg)
+      if (d.up === null) {
+        note.textContent = `${d.athletes} athlete${d.athletes === 1 ? '' : 's'} with enough data · needs 3`
+        svgEl('rect', { x: 0, y: top + barY, width, height: barH, rx: 4, fill: 'var(--grid)' }, svg)
+        return
+      }
+      note.textContent = row.note(d)
+      let x = 0
+      SPLIT.forEach((s, si) => {
+        const w = (width * d[s.key]) / d.athletes
+        if (w <= 0) return
+        svgEl('rect', { x: x + (x > 0 ? 1 : 0), y: top + barY, width: Math.max(w - (x > 0 ? 1 : 0), 1), height: barH, rx: 3, fill: s.color }, svg)
+        if (w > 22) {
+          const v = svgEl('text', { x: x + w / 2, y: top + barY + barH - 5, 'text-anchor': 'middle' }, svg)
+          v.textContent = String(d[s.key]); v.style.fill = si === 1 ? 'var(--ink)' : '#fff'
+        }
+        x += w
       })
+      const hit = svgEl('rect', { x: 0, y: top, width, height: rowH, class: 'hit', tabindex: 0 }, svg)
+      hover(hit, card, row.label, [
+        ...SPLIT.map((s, si) => [names[si].toLowerCase(), fmt(d[s.key])]),
+        ['median before', fmt(d.medianBefore)],
+        ['median after', fmt(d.medianAfter)],
+        ['median change', fmt(d.medianChange)],
+      ])
     })
   }
+  const signed = (v) => (v === null || v === undefined ? '—' : v > 0 ? `+${v}` : String(v))
+  const SIGNAL = { positive: 'positive', green: 'green', yellow: 'yellow', red: 'red' }
 
   const renderResearch = () => {
     if (!research) return
-    const s = research.summary
+    const r = research
+    const s = r.summary
     const range = s.firstDay ? `${dateIt(s.firstDay)} – ${dateIt(s.lastDay)}` : 'no data yet'
     $('r-kpis').replaceChildren(
       kpi('Athletes who sent data', fmt(s.athletes), range),
-      kpi('Check-ins', fmt(s.checkIns), 'sent by the athletes'),
-      kpi('Check-ins per athlete', fmt(s.medianPerAthlete), 'median'),
-      kpi('Average intensity', fmt(s.meanIntensity), 'symptoms only, 0 to 10'),
-      kpi('Positive check-ins', fmt(s.positiveSharePct, '%'), 'strong or light'),
+      kpi('Check-ins', fmt(s.checkIns), `median ${fmt(s.medianPerAthlete)} per athlete`),
+      kpi('Days with a record', fmt(s.medianCoveredPct, '%'), 'median per athlete'),
+      kpi('With training routine', fmt(s.athletesWithRoutine), 'athletes'),
     )
-    const itemTip = (item) => [
-      ['check-ins', fmt(item.count)],
-      ['athletes', fmt(item.athletes)],
-      ['average intensity', fmt(item.meanIntensity)],
-      ...(item.extra ? [['category', item.extra]] : []),
-    ]
-    const withIntensity = (item) => `${item.count} · avg ${fmt(item.meanIntensity)}`
-    hbars($('r-words'), research.words, withIntensity, itemTip)
-    hbars($('r-zones'), research.zones, (item) => `${item.count}`, itemTip)
-    hbars($('r-categories'), research.categories, withIntensity, itemTip)
-    hbars($('r-signals'), research.signals, (item) => (item.label === 'Positive' ? `${item.count}` : withIntensity(item)), itemTip)
-    hbars($('r-triggers'), research.triggers, (item) => `${item.count}`, itemTip)
-    columns($('r-intensity'), research.intensity.map((b) => ({ label: String(b.level), value: b.count })),
-      (b) => `Intensity ${b.label}`, (b) => [['check-ins', fmt(b.value)]])
-    columns($('r-weeks'), research.weeks.map((w) => ({ ...w, label: dateIt(w.from), value: w.checkIns })),
-      (w) => `Week from ${dateIt(w.from, { day: 'numeric', month: 'long' })}`,
-      (w) => [['check-ins', fmt(w.checkIns)], ['athletes', fmt(w.athletes)], ['average intensity', fmt(w.meanIntensity)]],
-      research.weeks.length > 10 ? 2 : 1)
-    drawPeriod()
-    const g = (label, x) => [label, fmt(x.checkIns), fmt(x.athletes), fmt(x.meanIntensity), fmt(x.meanEnergy),
-      fmt(x.positiveSharePct, '%'), fmt(x.alertSharePct, '%'), fmt(x.painSharePct, '%')]
-    table($('r-table'), ['Day', 'Check-ins', 'Athletes', 'Avg intensity (symptoms)', 'Avg energy', 'Positive', 'Yellow/red', 'Pain words'], [
-      g('On period', research.period.yes),
-      g('Not on period', research.period.no),
-      g('Took a painkiller', research.painkiller.yes),
-      g('No painkiller', research.painkiller.no),
+
+    // 1 · body literacy
+    const L = r.literacy
+    $('r-literacy-sub').textContent = `Each athlete compared with herself: her first ${L.window} check-ins against her last ${L.window} ` +
+      `(only athletes with at least ${L.minCheckIns} check-ins over ${L.minDays}+ days). The pre/post questionnaire is the other half of this measure.`
+    split($('r-literacy'), $('r-literacy-legend'), ['Improved', 'Same', 'Less'], [
+      { label: `Vocabulary: different words in ${L.window} check-ins`, data: L.vocabulary, note: (d) => `median ${fmt(d.medianBefore)} → ${fmt(d.medianAfter)}` },
+      { label: 'Precise area (not whole body), % of symptoms', data: L.precision, note: (d) => `median ${fmt(d.medianBefore, '%')} → ${fmt(d.medianAfter, '%')}` },
+      { label: 'Says when it shows up, % of symptoms', data: L.moments, note: (d) => `median ${fmt(d.medianBefore, '%')} → ${fmt(d.medianAfter, '%')}` },
     ])
+
+    // 2 · what they feel
+    const athletesTip = (item) => [
+      ['athletes', fmt(item.athletes)],
+      ['check-ins', fmt(item.checkIns)],
+      ['average intensity', fmt(item.meanIntensity)],
+      ...(item.signal ? [['signal', SIGNAL[item.signal] ?? item.signal]] : []),
+    ]
+    const asCount = (items) => items.map((i) => ({ ...i, count: i.athletes }))
+    hbars($('r-words'), asCount(r.feel.words), (i) => `${i.athletes} · ${i.signal ? SIGNAL[i.signal] : ''}`.replace(/ · $/, ''), athletesTip)
+    const ZONE = { whole: 'whole body' }
+    const MOMENT = { movement: 'when moving', pressure: 'when pressed', stillness: 'when still' }
+    hbars($('r-zones'), asCount(r.feel.zones).map((i) => ({ ...i, label: ZONE[i.label] ?? i.label })), (i) => `${i.athletes} athletes`, athletesTip)
+    hbars($('r-moments'), asCount(r.feel.moments).map((i) => ({ ...i, label: MOMENT[i.label] ?? i.label })), (i) => `${i.athletes} athletes`, athletesTip)
+
+    // 3 · cycle
+    const C = r.cycle
+    split($('r-cycle'), $('r-cycle-legend'), ['Higher on period days', 'Same', 'Lower'], [
+      { label: 'Symptom intensity (0–10)', data: C.intensity, note: (d) => `median ${signed(d.medianChange)}` },
+      { label: 'Energy (1–7)', data: C.energy, note: (d) => `median ${signed(d.medianChange)}` },
+      { label: 'Yellow / red symptoms (% of symptoms)', data: C.alert, note: (d) => `median ${signed(d.medianChange)} pts` },
+    ])
+    const pk = C.painkiller
+    $('r-painkiller').textContent = pk.period.pct === null || pk.other.pct === null
+      ? 'Painkillers: not enough answers yet (at least 3 athletes on period days and on other days).'
+      : `Painkillers: taken on ${pk.period.pct}% of period days (${pk.period.days} days, ${pk.period.athletes} athletes) and on ${pk.other.pct}% of other days (${pk.other.days} days).`
+
+    // 4 · training
+    const T = r.training
+    const P = T.planned
+    $('r-training-sub').textContent = P.minutesPerWeek === null
+      ? `Check-ins placed around each athlete's weekly routine. ${T.athletesWithRoutine} athlete(s) entered a routine: needs 3.`
+      : `Check-ins placed around each athlete's weekly routine (up to 4 h before or after a session). Planned load, median: ` +
+        `${P.minutesPerWeek} min, ${P.sessionsPerWeek} sessions and ${P.matchesPerWeek} match(es) a week.`
+    const moments = T.moments.filter((m) => m.checkIns > 0).map((m) => ({ ...m, count: m.checkIns }))
+    hbars($('r-moments-training'), T.athletesWithRoutine >= r.minAthletes ? moments : [],
+      (m) => `${m.checkIns} · avg ${fmt(m.meanIntensity)}`,
+      (m) => [['check-ins', fmt(m.checkIns)], ['athletes', fmt(m.athletes)], ['average intensity', fmt(m.meanIntensity)],
+        ['yellow / red', fmt(m.alertSharePct, '%')], ['strong / light', fmt(m.positiveSharePct, '%')]])
+    split($('r-training'), $('r-training-legend'), ['Higher after a session', 'Same', 'Lower'], [
+      { label: 'Symptoms after a session vs her rest days', data: T.afterSessionVsRest, note: (d) => `median ${fmt(d.medianBefore)} → ${fmt(d.medianAfter)}` },
+    ])
+
+    // 5 · data for a future model
+    const V = r.coverage
+    $('r-coverage-sub').textContent = V.days === null
+      ? 'Share of days with at least one record, per athlete. Needs 3 athletes.'
+      : `Share of days with at least one record, per athlete. Median athlete, over ${V.days.span} days: ${V.days.good} good days (strong / light only), ` +
+        `${V.days.symptom} with a symptom, ${V.days.answerOnly} with only the period / painkiller answer, ${V.days.none} without data.`
+    hbars($('r-coverage'), V.bands.map((b) => ({ ...b, count: b.athletes })), (b) => `${b.athletes} athletes`,
+      (b) => [['athletes', fmt(b.athletes)]])
+
     $('r-status').textContent = s.checkIns ? '' : 'No check-ins have been sent yet.'
   }
 

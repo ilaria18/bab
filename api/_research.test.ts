@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createHash } from 'node:crypto'
-import { DELETE, POST, toResearchRow } from './research'
+import { DELETE, POST, toResearchRow, toRoutine } from './research'
 
 const TOKEN = 'a'.repeat(64)
 const row = {
@@ -27,6 +27,17 @@ describe('research rows', () => {
     expect(toResearchRow('K7QH3M', { ...row, triggers: ['sleep'] })).toBeNull()
     expect(toResearchRow('K7QH3M', { ...row, body_zones: ['<script>'] })).toBeNull()
     expect(toResearchRow('K7QH3M', { ...row, note: 'x'.repeat(2001) })).toBeNull()
+  })
+})
+
+describe('routine', () => {
+  it('keeps weekday, kind and times only; refuses anything else', () => {
+    const session = { day: 1, kind: 'training', start: '18:00', end: '20:00' }
+    expect(toRoutine(undefined)).toEqual([])
+    expect(toRoutine([{ ...session, place: 'gym' }])).toEqual([session])
+    expect(toRoutine([{ ...session, day: 8 }])).toBeNull()
+    expect(toRoutine([{ ...session, kind: 'party' }])).toBeNull()
+    expect(toRoutine(Array.from({ length: 15 }, () => session))).toBeNull()
   })
 })
 
@@ -57,10 +68,17 @@ describe('research endpoint', () => {
   const del = (body: unknown) => DELETE(new Request('https://app.test/api/research', { method: 'DELETE', body: JSON.stringify(body) }))
   const valid = { code: 'K7QH3M', token: TOKEN, consentVersion: '2026-10-v1', rows: [row] }
 
+  it('stores the routine sent with the data', async () => {
+    const routine = [{ day: 6, kind: 'match', start: '17:00', end: '19:00' }]
+    expect((await post({ ...valid, routine })).status).toBe(200)
+    expect(JSON.parse(String(calls[1].init?.body)).routine).toEqual(routine)
+    expect((await post({ ...valid, routine: [{ day: 6 }] })).status).toBe(400)
+  })
+
   it('stores a first send: participant with the token hash, then the rows', async () => {
     expect((await post(valid)).status).toBe(200)
     const participant = JSON.parse(String(calls[1].init?.body))
-    expect(participant).toMatchObject({ code: 'K7QH3M', consent_version: '2026-10-v1' })
+    expect(participant).toMatchObject({ code: 'K7QH3M', consent_version: '2026-10-v1', routine: [] })
     expect(participant.token_hash).toBe(createHash('sha256').update(TOKEN).digest('hex'))
     expect(JSON.stringify(participant)).not.toContain(TOKEN)
     expect(calls[2]).toMatchObject({ url: 'https://db.test/rest/v1/research_checkins?participant=eq.K7QH3M', init: { method: 'DELETE' } })

@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import { timingSafeEqual } from 'node:crypto'
 import { json, supabase } from './_reminders.js'
-import { computeResearchMetrics, type ResearchCheckinRow } from './_researchMetrics.js'
+import { computeResearchMetrics, type ParticipantRow, type ResearchCheckinRow } from './_researchMetrics.js'
 
 /**
  * First analyses of the check-ins athletes sent, for the dashboard's "Check-ins" tab.
@@ -9,13 +9,13 @@ import { computeResearchMetrics, type ResearchCheckinRow } from './_researchMetr
  * GET /api/research-metrics?start=YYYY-MM-DD   (optional: only the 35 pilot days from start)
  * Header: Authorization: Bearer <DASHBOARD_PASSWORD>
  *
- * Reads research_checkins with the server's secret key and returns aggregates only: the rows,
- * the notes and the participant codes never leave this function.
+ * Reads research_checkins and the routines in research_participants with the server's secret key
+ * and returns aggregates only: the rows, the notes and the participant codes never leave this function.
  */
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/
 const PAGE = 1000
-const COLUMNS = 'participant,record,date,word_id,word,category,intensity,energy,triggers,body_zones,on_period,took_painkiller'
+const COLUMNS = 'participant,record,date,time,word_id,word,category,intensity,energy,triggers,body_zones,on_period,took_painkiller'
 
 const passwordMatches = (given: string, expected: string) => {
   const a = Buffer.from(given)
@@ -36,6 +36,12 @@ const readRows = async (): Promise<ResearchCheckinRow[]> => {
   }
 }
 
+const readParticipants = async (): Promise<ParticipantRow[]> => {
+  const response = await supabase('research_participants?select=code,routine')
+  if (!response.ok) throw new Error(`research_participants: ${response.status} ${await response.text()}`)
+  return (await response.json()) as ParticipantRow[]
+}
+
 export async function GET(request: Request): Promise<Response> {
   const expected = process.env.DASHBOARD_PASSWORD
   if (!expected || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
@@ -52,7 +58,8 @@ export async function GET(request: Request): Promise<Response> {
       ? { from: start, to: new Date(Date.parse(`${start}T00:00:00Z`) + 34 * 86_400_000).toISOString().slice(0, 10) }
       : undefined
   try {
-    return json(200, computeResearchMetrics(await readRows(), range))
+    const [rows, participants] = await Promise.all([readRows(), readParticipants()])
+    return json(200, computeResearchMetrics(rows, participants, range))
   } catch (error) {
     console.error('Could not read the research data', error)
     return json(502, { error: 'database' })

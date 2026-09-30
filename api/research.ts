@@ -6,10 +6,11 @@ import { json, supabase } from './_reminders.js'
  * The pilot's research data: an athlete's check-ins, sent from her phone only when she taps
  * "Send my data" and confirms (src/features/data-export).
  *
- * POST    { code, token, consentVersion, rows }  stores her rows, replacing what she sent before
+ * POST    { code, token, consentVersion, rows, routine? }  stores her rows (and her weekly
+ *         training/match routine), replacing what she sent before
  * DELETE  { code, token }                        deletes everything she sent
  *
- * Tables (analytics/setup.sql): research_participants, research_checkins.
+ * Tables (analytics/setup.sql): research_participants (with the routine), research_checkins.
  * No name, no contact, no IP or device id is stored: `code` is a random 6-character code made on
  * the phone. `token` is a secret only that phone has; only its SHA-256 is stored, and every
  * replace/delete must present it, so nobody else can overwrite or erase an athlete's data.
@@ -57,6 +58,33 @@ const optionalInt = (value: unknown, min: number, max: number): number | null | 
 }
 const optionalBool = (value: unknown): boolean | null | undefined =>
   value === null || value === undefined ? null : typeof value === 'boolean' ? value : undefined
+
+export type RoutineSession = { day: number; kind: 'training' | 'match'; start: string; end: string }
+
+/** The weekly routine as entered in Settings; null if anything is off. At most 14 sessions. */
+export const toRoutine = (input: unknown): RoutineSession[] | null => {
+  if (input === undefined || input === null) return []
+  if (!Array.isArray(input) || input.length > 14) return null
+  const sessions: RoutineSession[] = []
+  for (const item of input) {
+    const s = item as Record<string, unknown> | null
+    if (
+      !s ||
+      !Number.isInteger(s.day) ||
+      (s.day as number) < 1 ||
+      (s.day as number) > 7 ||
+      (s.kind !== 'training' && s.kind !== 'match') ||
+      typeof s.start !== 'string' ||
+      !TIME.test(s.start) ||
+      typeof s.end !== 'string' ||
+      !TIME.test(s.end)
+    ) {
+      return null
+    }
+    sessions.push({ day: s.day as number, kind: s.kind, start: s.start, end: s.end })
+  }
+  return sessions
+}
 
 /** Rebuilt field by field: anything else the client sends is dropped. Null if a field is invalid. */
 export const toResearchRow = (participant: string, input: unknown): Row | null => {
@@ -147,12 +175,14 @@ export async function POST(request: Request): Promise<Response> {
   }
   const rows = (body.rows as unknown[]).map((row) => toResearchRow(code, row))
   if (rows.some((row) => row === null)) return json(400, { error: 'invalid_row' })
+  const routine = toRoutine(body.routine)
+  if (!routine) return json(400, { error: 'invalid_routine' })
 
   try {
     const owner = await checkOwner(code, token)
     if (owner === 'forbidden') return json(403, { error: 'forbidden' })
     const now = new Date().toISOString()
-    const participant = { code, token_hash: hash(token), consent_version: consentVersion, updated_at: now }
+    const participant = { code, token_hash: hash(token), consent_version: consentVersion, routine, updated_at: now }
     const saved =
       owner === 'new'
         ? await supabase('research_participants', {
@@ -162,7 +192,7 @@ export async function POST(request: Request): Promise<Response> {
           })
         : await supabase(`research_participants?code=eq.${code}`, {
             method: 'PATCH',
-            body: JSON.stringify({ consent_version: consentVersion, updated_at: now }),
+            body: JSON.stringify({ consent_version: consentVersion, routine, updated_at: now }),
           })
     if (!saved.ok) return failed('save the participant', saved)
 

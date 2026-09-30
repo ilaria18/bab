@@ -853,8 +853,8 @@ msgid "Saved only on this phone: don't delete the app. Send them to BAB without 
 msgstr "Salvati solo su questo telefono: non cancellare l’app. Inviali a BAB senza il tuo nome."
 
 #: src/features/settings
-msgid "Your check-ins (notes included) and period and painkiller days go to BAB with the code {code} instead of your name. You can delete them at any time."
-msgstr "I tuoi check-in (note comprese) e i giorni di ciclo e antidolorifici vanno a BAB con il codice {code} al posto del nome. Puoi cancellarli quando vuoi."
+msgid "Your check-ins (notes included), your period and painkiller days and your training and match times go to BAB with the code {code} instead of your name. You can delete them at any time."
+msgstr "I tuoi check-in (note comprese), i giorni di ciclo e antidolorifici e gli orari di allenamenti e partite vanno a BAB con il codice {code} al posto del nome. Puoi cancellarli quando vuoi."
 
 #: src/features/feedback
 msgid "Feedback"

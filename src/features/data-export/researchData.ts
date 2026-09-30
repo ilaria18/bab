@@ -2,6 +2,7 @@ import type { CheckInEntry } from '@/entities/check-in/types'
 import type { DailyLog } from '@/entities/daily-log/types'
 import { createId } from '@/shared/lib/createId'
 import { safeStorage } from '@/shared/lib/safeStorage'
+import type { Session } from '@/features/reminder/trainingRoutine'
 
 /**
  * The athlete's own check-ins, sent to the BAB research database (api/research.ts) only when she
@@ -9,10 +10,12 @@ import { safeStorage } from '@/shared/lib/safeStorage'
  * No name is sent: the rows carry a random participant code, the same for every send from this
  * phone, and a secret token that only this phone has — so only this phone can replace or delete
  * the data it sent. Words and body areas travel as their English ids, the same for every athlete.
+ * With them goes her weekly training/match routine (weekday, kind, start, end — as entered in
+ * Settings), so check-ins can be compared with the training load.
  */
 
 /** bump when the consent text shown before sending changes */
-export const CONSENT_VERSION = '2026-10-v1'
+export const CONSENT_VERSION = '2026-10-v2'
 export const RESEARCH_API = '/api/research'
 
 const CODE_KEY = 'participant-code'
@@ -122,11 +125,11 @@ export const buildRows = (
 }
 
 /** Sends everything; what this phone sent before is replaced (so deleted check-ins go too). */
-export const sendResearchData = async (rows: ResearchRow[]): Promise<void> => {
+export const sendResearchData = async (rows: ResearchRow[], routine: Session[] = []): Promise<void> => {
   const response = await fetch(RESEARCH_API, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code: participantCode(), token: participantToken(), consentVersion: CONSENT_VERSION, rows }),
+    body: JSON.stringify({ code: participantCode(), token: participantToken(), consentVersion: CONSENT_VERSION, rows, routine }),
     credentials: 'omit',
   })
   if (!response.ok) throw new Error(`research upload: ${response.status}`)
