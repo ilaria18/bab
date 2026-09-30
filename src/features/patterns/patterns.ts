@@ -11,7 +11,7 @@ import type { Session } from '@/features/reminder/trainingRoutine'
  * Observations only: nothing here is a diagnosis or a score.
  */
 
-const SIGNAL = new Map(WORDS.map((w) => [w.id, w.signal]))
+const SIGNAL = new Map<string, string>(WORDS.map((w) => [w.id, w.signal]))
 const isPositive = (e: CheckInEntry) => !usesPainScale(e.wordId)
 const isSymptom = (e: CheckInEntry) => usesPainScale(e.wordId)
 
