@@ -58,7 +58,8 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--page); color: var(--ink); font: 15px/1.45 var(--font); }
   header { background: var(--brand); color: #fff; padding: 18px 16px; }
-  header .wrap { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  header .wrap { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  header .logo { height: 28px; width: auto; display: block; }
   header h1 { margin: 0; font-size: 20px; font-weight: 600; }
   header h1 span { color: var(--brand-ink); }
   header p { margin: 0; color: rgba(255, 255, 255, 0.75); font-size: 14px; }
@@ -121,6 +122,7 @@
 <body>
 <header>
   <div class="wrap">
+    <img class="logo" src="/logo-white.png" alt="" width="61" height="28">
     <h1>BAB <span>·</span> Pilot</h1>
     <p>Anonymous app usage statistics</p>
   </div>

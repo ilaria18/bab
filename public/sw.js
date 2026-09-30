@@ -116,7 +116,7 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(message.title || 'BAB', {
       body: message.body || '',
       icon: '/icon-192.png',
-      badge: '/icon-192.png',
+      badge: '/badge-96.png', // Android's status bar shows only its shape: white logo on transparent
       tag: 'bab-daily-reminder', // a new reminder replaces yesterday's instead of piling up
     }),
   )
