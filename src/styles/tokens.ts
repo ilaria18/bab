@@ -12,8 +12,8 @@ export const COLORS = {
 export type ColorToken = keyof typeof COLORS
 
 export const FONTS = {
-  display: "'Bricolage Grotesque', system-ui, sans-serif",
-  body: "'Instrument Sans', system-ui, sans-serif",
+  display: "'Bricolage Grotesque Variable', 'Bricolage Grotesque', system-ui, sans-serif",
+  body: "'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif",
 } as const
 
 export const TYPE = {

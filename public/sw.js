@@ -99,7 +99,7 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     event.respondWith(handleNavigation(request, event))
-  } else if (url.origin === self.location.origin || url.hostname.endsWith('fonts.googleapis.com') || url.hostname.endsWith('fonts.gstatic.com')) {
+  } else if (url.origin === self.location.origin) {
     event.respondWith(handleAsset(request))
   }
 })

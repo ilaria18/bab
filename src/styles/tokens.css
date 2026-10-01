@@ -25,8 +25,8 @@
   --color-ink-on-light-muted: color-mix(in srgb, var(--color-ground) 38%, black);
 
   /* Fonts */
-  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
-  --font-body: 'Instrument Sans', system-ui, sans-serif;
+  --font-display: 'Bricolage Grotesque Variable', 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: 'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif;
 
   /* Display type: short, punchy "sensation words" */
   --display-weight: 800;
