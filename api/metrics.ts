@@ -1,6 +1,7 @@
 /// <reference types="node" />
 import { timingSafeEqual } from 'node:crypto'
 import { computeMetrics, PILOT_DAYS, type VisitRow } from './_metrics.js'
+import { dbError } from './_reminders.js'
 
 /**
  * The pilot's metrics for the dashboard (public/dashboard.html), as JSON.
@@ -46,7 +47,7 @@ const readAll = async <T>(table: string, query: string): Promise<T[]> => {
         Range: `${from}-${from + PAGE - 1}`,
       },
     })
-    if (!response.ok) throw new Error(`Supabase ${table}: ${response.status} ${await response.text()}`)
+    if (!response.ok) throw new Error(`Supabase ${table}: ${await dbError(response)}`)
     const page = (await response.json()) as T[]
     rows.push(...page)
     if (page.length < PAGE) return rows

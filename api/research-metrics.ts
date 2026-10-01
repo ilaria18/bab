@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import { timingSafeEqual } from 'node:crypto'
-import { json, supabase } from './_reminders.js'
+import { dbError, json, supabase } from './_reminders.js'
 import { computeResearchMetrics, type ParticipantRow, type ResearchCheckinRow } from './_researchMetrics.js'
 
 /**
@@ -29,7 +29,7 @@ const readRows = async (): Promise<ResearchCheckinRow[]> => {
     const response = await supabase(`research_checkins?select=${COLUMNS}&order=date`, {
       headers: { 'Range-Unit': 'items', Range: `${from}-${from + PAGE - 1}` },
     })
-    if (!response.ok) throw new Error(`research_checkins: ${response.status} ${await response.text()}`)
+    if (!response.ok) throw new Error(`research_checkins: ${await dbError(response)}`)
     const page = (await response.json()) as ResearchCheckinRow[]
     rows.push(...page)
     if (page.length < PAGE) return rows
@@ -38,7 +38,7 @@ const readRows = async (): Promise<ResearchCheckinRow[]> => {
 
 const readParticipants = async (): Promise<ParticipantRow[]> => {
   const response = await supabase('research_participants?select=code,routine')
-  if (!response.ok) throw new Error(`research_participants: ${response.status} ${await response.text()}`)
+  if (!response.ok) throw new Error(`research_participants: ${await dbError(response)}`)
   return (await response.json()) as ParticipantRow[]
 }
 

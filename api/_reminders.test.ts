@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createECDH } from 'node:crypto'
-import { dueReminders, localNow, type ReminderRow } from './_reminders'
+import { dbError, dueReminders, localNow, type ReminderRow } from './_reminders'
 import { b64u } from './_webpush'
 import { PUT } from './reminder'
 import { POST as sendReminders } from './send-reminders'
@@ -11,6 +11,19 @@ const row = (remind_at: string, extra: Partial<ReminderRow> = {}): ReminderRow =
   title: 'BAB', body: 'Daily', last_sent_day: null, ...extra,
 })
 const keysDue = (r: ReminderRow, iso: string) => dueReminders(r, at(iso)).due.map((d) => d.key)
+
+describe('database errors in the logs', () => {
+  it('keeps the code and message, never the refused row', async () => {
+    const refused = Response.json(
+      { code: '23514', message: 'new row violates check constraint "feedback_message_check"', details: 'Failing row contains (1, 2026-10-05, idea, my knee hurts since Maria pushed me).' },
+      { status: 400 },
+    )
+    const logged = await dbError(refused)
+    expect(logged).toBe('400 23514 new row violates check constraint "feedback_message_check"')
+    expect(logged).not.toContain('knee')
+    expect(await dbError(new Response('oops', { status: 502 }))).toBe('502')
+  })
+})
 
 describe('reminder schedule', () => {
   it('reads the local day, weekday and time in the athlete’s time zone', () => {

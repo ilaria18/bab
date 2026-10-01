@@ -122,6 +122,20 @@ export const supabase = (path: string, init: RequestInit = {}) => {
   })
 }
 
+/**
+ * What of a database error may go to the logs: the status and Supabase's error code and message,
+ * never its "details" or "hint", which can repeat the refused row (health data, notes, feedback).
+ */
+export const dbError = async (response: Response): Promise<string> => {
+  try {
+    const body = (await response.json()) as { code?: unknown; message?: unknown }
+    const message = typeof body.message === 'string' ? body.message.replace(/\(.*\)/g, '(…)').slice(0, 200) : ''
+    return `${response.status} ${typeof body.code === 'string' ? body.code : ''} ${message}`.trim()
+  } catch {
+    return String(response.status)
+  }
+}
+
 export const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), {
     status,

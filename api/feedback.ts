@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import { timingSafeEqual } from 'node:crypto'
-import { json, supabase } from './_reminders.js'
+import { dbError, json, supabase } from './_reminders.js'
 
 /**
  * Anonymous feedback from the athletes (the app's "Feedback" tab).
@@ -55,7 +55,7 @@ export async function POST(request: Request): Promise<Response> {
     body: JSON.stringify(row),
   })
   if (!response.ok) {
-    console.error('Could not save the feedback', response.status, await response.text())
+    console.error('Could not save the feedback', await dbError(response))
     return json(502, { error: 'database' })
   }
   return json(200, { ok: true })
@@ -79,7 +79,7 @@ export async function GET(request: Request): Promise<Response> {
   const filter = start && DAY.test(start) ? `&day=gte.${start}` : ''
   const response = await supabase(`feedback?select=day,kind,screen,message&order=day.desc,id.desc&limit=500${filter}`)
   if (!response.ok) {
-    console.error('Could not read the feedback', response.status, await response.text())
+    console.error('Could not read the feedback', await dbError(response))
     return json(502, { error: 'database' })
   }
   const items = (await response.json()) as { day: string; kind: string; screen: string; message: string }[]

@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import { timingSafeEqual } from 'node:crypto'
-import { dueReminders, json, supabase, TABLE, type ReminderRow } from './_reminders.js'
+import { dbError, dueReminders, json, supabase, TABLE, type ReminderRow } from './_reminders.js'
 import { sendPush, type VapidKeys } from './_webpush.js'
 
 /**
@@ -45,7 +45,7 @@ const run = async (request: Request): Promise<Response> => {
   const now = new Date()
   const light = await supabase(`${TABLE}?select=${WHEN_COLUMNS}`)
   if (!light.ok) {
-    console.error('Could not read the reminders', light.status, await light.text())
+    console.error('Could not read the reminders', await dbError(light))
     return json(502, { error: 'database' })
   }
   const checked = (await light.json()) as ReminderRow[]
@@ -55,7 +55,7 @@ const run = async (request: Request): Promise<Response> => {
     const list = dueEndpoints.slice(i, i + 20).map((e) => `"${e.replace(/"/g, '')}"`).join(',')
     const full = await supabase(`${TABLE}?select=*&endpoint=in.(${encodeURIComponent(list)})`)
     if (!full.ok) {
-      console.error('Could not read the due reminders', full.status, await full.text())
+      console.error('Could not read the due reminders', await dbError(full))
       return json(502, { error: 'database' })
     }
     rows.push(...((await full.json()) as ReminderRow[]))

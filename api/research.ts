@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import { createHash, timingSafeEqual } from 'node:crypto'
-import { json, supabase } from './_reminders.js'
+import { dbError, json, supabase } from './_reminders.js'
 
 /**
  * The pilot's research data: an athlete's check-ins, sent from her phone only when she taps
@@ -143,14 +143,14 @@ const configured = () => Boolean(process.env.SUPABASE_URL && process.env.SUPABAS
 /** 'new' if no one has used this code yet, 'ok' if the token matches, 'forbidden' otherwise */
 const checkOwner = async (code: string, token: string): Promise<'new' | 'ok' | 'forbidden'> => {
   const response = await supabase(`research_participants?code=eq.${code}&select=token_hash`)
-  if (!response.ok) throw new Error(`participants: ${response.status} ${await response.text()}`)
+  if (!response.ok) throw new Error(`participants: ${await dbError(response)}`)
   const [existing] = (await response.json()) as { token_hash: string }[]
   if (!existing) return 'new'
   return sameHash(existing.token_hash, hash(token)) ? 'ok' : 'forbidden'
 }
 
 const failed = async (what: string, response: Response) => {
-  console.error(`Could not ${what}`, response.status, await response.text())
+  console.error(`Could not ${what}`, await dbError(response))
   return json(502, { error: 'database' })
 }
 

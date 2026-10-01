@@ -1,5 +1,5 @@
 /// <reference types="node" />
-import { isTimeZone, json, MAX_SLOTS, SLOT_TYPES, supabase, TABLE, TIME, type Slot, type SlotType, type Text } from './_reminders.js'
+import { dbError, isTimeZone, json, MAX_SLOTS, SLOT_TYPES, supabase, TABLE, TIME, type Slot, type SlotType, type Text } from './_reminders.js'
 import { b64u, isPushEndpoint } from './_webpush.js'
 
 /**
@@ -118,7 +118,7 @@ export async function PUT(request: Request): Promise<Response> {
     body: JSON.stringify(row),
   })
   if (!response.ok) {
-    console.error('Could not save the reminder', response.status, await response.text())
+    console.error('Could not save the reminder', await dbError(response))
     return json(502, { error: 'database' })
   }
   return json(200, { ok: true })
@@ -130,7 +130,7 @@ export async function DELETE(request: Request): Promise<Response> {
   if (!body || !isPushEndpoint(body.endpoint)) return json(400, { error: 'invalid' })
   const response = await supabase(`${TABLE}?endpoint=eq.${encodeURIComponent(body.endpoint)}`, { method: 'DELETE' })
   if (!response.ok) {
-    console.error('Could not delete the reminder', response.status, await response.text())
+    console.error('Could not delete the reminder', await dbError(response))
     return json(502, { error: 'database' })
   }
   return json(200, { ok: true })

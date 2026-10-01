@@ -1,6 +1,5 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { Analytics } from '@vercel/analytics/react'
 import { i18n } from '@lingui/core'
 import { I18nProvider } from '@lingui/react'
 import { RouterProvider } from 'react-router-dom'
@@ -57,8 +56,6 @@ const start = async () => {
         {/* first open of the installed app: share the anonymous statistics? */}
         <UsageConsentPrompt />
       </I18nProvider>
-      {/* Vercel's page-view counter only works on the website's own domain */}
-      {!isNative && <Analytics />}
     </StrictMode>,
   )
   // once the first screen is up and the browser is idle, fetch the other screens
