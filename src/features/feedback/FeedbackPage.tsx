@@ -9,7 +9,7 @@ type State = 'editing' | 'sending' | 'sent' | 'error'
 
 /** Always one tap away (tab bar): tell the BAB team what works, what doesn't, or an idea — anonymously. */
 export const FeedbackPage = () => {
-  const { t, i18n } = useLingui()
+  const { t } = useLingui()
   const [kind, setKind] = useState<FeedbackKind | null>(null)
   const [message, setMessage] = useState('')
   const [screen, setScreen] = useState<FeedbackScreen>('general')
@@ -36,7 +36,7 @@ export const FeedbackPage = () => {
     if (!kind) return
     setState('sending')
     try {
-      await sendFeedback({ kind, message, screen, language: i18n.locale })
+      await sendFeedback({ kind, message, screen })
       setState('sent')
     } catch (error) {
       console.error('Could not send the feedback', error)

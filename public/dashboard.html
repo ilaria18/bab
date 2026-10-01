@@ -209,7 +209,7 @@
 
         <article class="card wide">
           <h2>Athletes' feedback</h2>
-          <p class="sub">Anonymous messages sent from the Feedback tab of the app, newest first. Only the day is kept, not who sent it.</p>
+          <p class="sub">Messages sent from the Feedback tab of the app, newest first. Without a name; only the week is kept, not the day.</p>
           <div class="feedback-counts" id="feedback-counts"></div>
           <div class="scroll feedback-list" id="feedback-list"></div>
         </article>
@@ -537,8 +537,8 @@
       return span
     }))
     if (!feedback.items.length) { $('feedback-list').replaceChildren(emptyChart2('No feedback yet.')); return }
-    table($('feedback-list'), ['Day', 'Kind', 'About', 'Message'],
-      feedback.items.map((f) => [`${weekdayIt(f.day)} ${dateIt(f.day)}`, KIND[f.kind] ?? f.kind, SCREEN[f.screen] ?? f.screen, f.message]))
+    table($('feedback-list'), ['Week of', 'Kind', 'About', 'Message'],
+      feedback.items.map((f) => [dateIt(f.day), KIND[f.kind] ?? f.kind, SCREEN[f.screen] ?? f.screen, f.message]))
   }
   const emptyChart2 = (text) => el('div', { class: 'empty' }, text)
   const loadFeedback = async () => {

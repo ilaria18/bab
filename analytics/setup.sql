@@ -112,14 +112,13 @@ alter table research_checkins enable row level security;
 
 
 -- ── 4. Anonymous feedback ────────────────────────────────────────────────────────────────────
--- Only the day it arrived: no time, no name, no participant code.
+-- Only the week it arrived (its Monday): no day, no time, no language, no name, no participant code.
 create table if not exists feedback (
   id        bigint generated always as identity primary key,
-  day       date not null default current_date,
+  day       date not null default date_trunc('week', current_date)::date,   -- Monday of the week
   kind      text not null check (kind in ('like', 'idea', 'problem')),
   message   text not null check (length(message) between 1 and 1000),
-  screen    text not null default 'general',
-  language  text
+  screen    text not null default 'general'
 );
 alter table feedback enable row level security;
 
@@ -141,3 +140,7 @@ notify pgrst, 'reload schema';
 --
 -- Existing project that still has the old table of weekly summaries (no longer used):
 --   drop table if exists usage_weeks;
+--
+-- Existing project whose feedback still has the day and the language (before October 2026):
+--   alter table feedback drop column if exists language;
+--   update feedback set day = date_trunc('week', day)::date;

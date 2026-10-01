@@ -5,17 +5,17 @@ import { dbError, json, supabase } from './_reminders.js'
 /**
  * Anonymous feedback from the athletes (the app's "Feedback" tab).
  *
- * POST { kind, message, screen, language }        stores one message (anyone with the app)
+ * POST { kind, message, screen }                  stores one message (anyone with the app)
  * GET  ?start=YYYY-MM-DD  + Authorization: Bearer <DASHBOARD_PASSWORD>
  *                                                  the messages for the dashboard, newest first
  *
- * Stored in `feedback` (analytics/setup.sql) with only the day it arrived:
- * no time, no name, no participant code, no IP or device id.
+ * Stored in `feedback` (analytics/setup.sql) with only the WEEK it arrived (its Monday, in the
+ * `day` column): no day, no time, no language, no name, no participant code, no IP or device id.
+ * In a small team, the day or the language could point at one athlete.
  */
 
 const KINDS = ['like', 'idea', 'problem']
 const SCREENS = ['general', 'check-in', 'journal', 'patterns', 'world', 'settings', 'reminders']
-const LANGUAGES = ['it', 'en']
 const MAX_MESSAGE = 1000
 const DAY = /^\d{4}-\d{2}-\d{2}$/
 
@@ -30,6 +30,12 @@ const readJson = async (request: Request): Promise<Record<string, unknown> | nul
 
 const configured = () => Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)
 
+/** Monday of the week of a YYYY-MM-DD day */
+export const weekStart = (day: string): string => {
+  const d = new Date(`${day}T12:00:00Z`)
+  return new Date(d.getTime() - ((d.getUTCDay() + 6) % 7) * 86_400_000).toISOString().slice(0, 10)
+}
+
 /** Rebuilt field by field: anything else in the request is dropped. Null if invalid. */
 export const toFeedbackRow = (body: Record<string, unknown> | null, today: string) => {
   if (!body) return null
@@ -37,11 +43,10 @@ export const toFeedbackRow = (body: Record<string, unknown> | null, today: strin
   if (!KINDS.includes(body.kind as string)) return null
   if (message.length === 0 || message.length > MAX_MESSAGE) return null
   return {
-    day: today,
+    day: weekStart(today),
     kind: body.kind as string,
     message,
     screen: SCREENS.includes(body.screen as string) ? (body.screen as string) : 'general',
-    language: LANGUAGES.includes(body.language as string) ? (body.language as string) : null,
   }
 }
 
@@ -76,7 +81,7 @@ export async function GET(request: Request): Promise<Response> {
     return json(401, { error: 'wrong_password' })
   }
   const start = new URL(request.url).searchParams.get('start')
-  const filter = start && DAY.test(start) ? `&day=gte.${start}` : ''
+  const filter = start && DAY.test(start) ? `&day=gte.${weekStart(start)}` : ''
   const response = await supabase(`feedback?select=day,kind,screen,message&order=day.desc,id.desc&limit=500${filter}`)
   if (!response.ok) {
     console.error('Could not read the feedback', await dbError(response))
