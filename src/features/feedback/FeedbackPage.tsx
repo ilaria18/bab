@@ -59,7 +59,7 @@ export const FeedbackPage = () => {
           <Trans>Tell us</Trans>
         </h1>
         <p className="feedback-hint">
-          <Trans>Anonymous: we don't receive your name. Every message is read by the BAB team.</Trans>
+          <Trans>Anonymous: we don't receive your name. Don't write names or health details. Every message is read by the BAB team.</Trans>
         </p>
 
         {state === 'sent' ? (

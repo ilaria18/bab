@@ -16,7 +16,9 @@ import { dbError, json, supabase } from './_reminders.js'
  * replace/delete must present it, so nobody else can overwrite or erase an athlete's data.
  * These are health data of minors: the tables are readable only with the server's secret key.
  *
- * Environment variables: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (as for api/usage.ts).
+ * Environment variables: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (as for api/usage.ts), and
+ * RESEARCH_UPLOAD=on to accept sends — off until parental consents, information notice and DPIA are
+ * in place. Deleting what was sent always works.
  */
 
 const CODE = /^[A-HJ-NP-Z2-9]{6}$/
@@ -155,6 +157,7 @@ const failed = async (what: string, response: Response) => {
 }
 
 export async function POST(request: Request): Promise<Response> {
+  if (process.env.RESEARCH_UPLOAD !== 'on') return json(403, { error: 'closed' })
   if (!configured()) return json(503, { error: 'not_configured' })
   const body = await readJson(request)
   const code = body?.code

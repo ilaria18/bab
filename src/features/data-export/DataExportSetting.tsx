@@ -10,12 +10,17 @@ import { buildRows, deleteResearchData, lastSentAt, participantCode, sendResearc
 
 type State = 'idle' | 'confirm' | 'working' | 'sent' | 'confirm-delete' | 'deleted' | 'empty' | 'error'
 
+/** "Send my data" is shown only once consents, information notice and DPIA are in place:
+ * set VITE_RESEARCH_UPLOAD=on in Vercel (and RESEARCH_UPLOAD=on for api/research.ts). Until then
+ * the check-ins simply stay on the phone; the first send will carry the whole history. */
+export const researchUploadOpen = (): boolean => import.meta.env.VITE_RESEARCH_UPLOAD === 'on'
+
 /**
  * "Your data": the check-ins stay on this phone; the athlete can send them to the BAB research
  * database, only by her own choice (two taps), send them again to update them, or delete what
  * she sent. Web app only (the pilot runs on it).
  */
-export const DataExportSetting = ({ available = !isNativeApp() }: { available?: boolean }) => {
+export const DataExportSetting = ({ available = !isNativeApp() && researchUploadOpen() }: { available?: boolean }) => {
   const { i18n } = useLingui()
   const [state, setState] = useState<State>('idle')
   const [sentAt, setSentAt] = useState(lastSentAt)

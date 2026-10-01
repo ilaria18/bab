@@ -50,6 +50,7 @@ describe('research endpoint', () => {
     existingHash = null
     vi.stubEnv('SUPABASE_URL', 'https://db.test')
     vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'sb_secret_x')
+    vi.stubEnv('RESEARCH_UPLOAD', 'on')
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string, init?: RequestInit) => {
@@ -67,6 +68,14 @@ describe('research endpoint', () => {
   const post = (body: unknown) => POST(new Request('https://app.test/api/research', { method: 'POST', body: JSON.stringify(body) }))
   const del = (body: unknown) => DELETE(new Request('https://app.test/api/research', { method: 'DELETE', body: JSON.stringify(body) }))
   const valid = { code: 'K7QH3M', token: TOKEN, consentVersion: '2026-10-v1', rows: [row] }
+
+  it('refuses sends while the research upload is closed, but still lets a phone delete', async () => {
+    vi.stubEnv('RESEARCH_UPLOAD', '')
+    expect((await post(valid)).status).toBe(403)
+    expect(calls).toEqual([])
+    existingHash = createHash('sha256').update(TOKEN).digest('hex')
+    expect((await del({ code: 'K7QH3M', token: TOKEN })).status).toBe(200)
+  })
 
   it('stores the routine sent with the data', async () => {
     const routine = [{ day: 6, kind: 'match', start: '17:00', end: '19:00' }]

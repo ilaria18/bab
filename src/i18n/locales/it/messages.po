@@ -889,8 +889,8 @@ msgid "Tell us"
 msgstr "Dicci la tua"
 
 #: src/features/feedback
-msgid "Anonymous: we don't receive your name. Every message is read by the BAB team."
-msgstr "Anonimo: non riceviamo il tuo nome. Ogni messaggio viene letto dal team BAB."
+msgid "Anonymous: we don't receive your name. Don't write names or health details. Every message is read by the BAB team."
+msgstr "Anonimo: non riceviamo il tuo nome. Non scrivere nomi né dati sulla salute. Ogni messaggio viene letto dal team BAB."
 
 #: src/features/feedback
 msgid "Thank you! Your message has reached the BAB team."
