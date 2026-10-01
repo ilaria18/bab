@@ -1,8 +1,10 @@
+import { useEffect } from 'react'
 import { Trans, useLingui } from '@lingui/react/macro'
 import { HeadMascot } from '@/entities/avatar/Head'
 import { useHeadWord } from '@/entities/avatar/headWord'
 import { useWornHat } from '@/entities/avatar/wornHat'
 import { useUserProfile } from '@/entities/user-profile/useUserProfile'
+import { saveNotificationTitle } from '@/shared/lib/notificationTitle'
 import './Greeting.css'
 
 // the welcome layout stacks two lines of text, so its bar (and mascot) stays
@@ -18,6 +20,11 @@ export const Greeting = ({ welcome = false }: { welcome?: boolean }) => {
   const displayName =
     name.trim() ||
     t({ message: 'Champ', comment: 'Friendly name the greeting uses until the user enters their own' })
+  // the notifications greet her by name too (kept on the phone, see notificationTitle.ts)
+  const notificationTitle = name.trim() ? t`Hi, ${displayName}` : null
+  useEffect(() => {
+    void saveNotificationTitle(notificationTitle)
+  }, [notificationTitle])
   const { hatId } = useWornHat()
   const { headWordId } = useHeadWord()
 

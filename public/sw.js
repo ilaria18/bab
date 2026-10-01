@@ -8,6 +8,8 @@ const { id: BUILD_ID, assets: BUILD_ASSETS } = self.__BUILD__ ?? { id: 'dev', as
 const BUILD_CACHE = `build-${BUILD_ID}`
 // Fonts, icons and the like: they outlive a deploy, so they are refreshed in place instead.
 const RUNTIME_CACHE = 'runtime-v1'
+/** the athlete's notification title ("Hi, Giulia"), written by the app: src/shared/lib/notificationTitle.ts */
+const PROFILE_CACHE = 'bab-profile'
 const SHELL = ['/', '/index.html', '/manifest.webmanifest', '/favicon.png', '/icon-192.png', '/icon-512.png']
 
 // How long a page waits on the network before the cached shell is shown instead.
@@ -26,7 +28,7 @@ self.addEventListener('install', (event) => {
 })
 
 self.addEventListener('activate', (event) => {
-  const keep = [BUILD_CACHE, RUNTIME_CACHE]
+  const keep = [BUILD_CACHE, RUNTIME_CACHE, PROFILE_CACHE]
   event.waitUntil(
     caches
       .keys()
@@ -112,13 +114,21 @@ self.addEventListener('push', (event) => {
   } catch {
     message = {}
   }
+  const savedTitle = async () => {
+    try {
+      const saved = await (await caches.open(PROFILE_CACHE)).match('/__bab/notification-title')
+      return saved ? (await saved.json()).title : null
+    } catch {
+      return null
+    }
+  }
   event.waitUntil(
-    self.registration.showNotification(message.title || 'BAB', {
+    savedTitle().then((title) => self.registration.showNotification(title || message.title || 'BAB', {
       body: message.body || '',
       icon: '/icon-192.png',
       badge: '/icon-192.png', // small icon in Android's status bar (as it was before the white logo)
       tag: 'bab-daily-reminder', // a new reminder replaces yesterday's instead of piling up
-    }),
+    })),
   )
 })
 
