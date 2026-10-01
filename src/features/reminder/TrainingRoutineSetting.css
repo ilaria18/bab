@@ -28,7 +28,7 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 2px;
+  gap: 6px; /* day on one line, times on the next */
   min-width: 0;
   font-size: 15px;
 }
@@ -59,7 +59,7 @@
   grid-template-areas:
     'day kind'
     'start end';
-  gap: 8px;
+  gap: 16px 8px; /* more room between the day/kind row and the times */
 }
 
 .training-routine__day { grid-area: day; }
