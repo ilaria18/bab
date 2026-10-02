@@ -21,7 +21,15 @@
   gap: 4px;
   padding: 10px 6px 10px 14px;
   border-radius: 16px;
-  background: var(--color-surface-raised);
+  /* saved sessions in lavender, the dropdowns of the form stay grey */
+  background: var(--color-cycle);
+  color: var(--color-ink-on-light);
+}
+
+.training-routine__saved .training-routine__summary span,
+.training-routine__saved .training-routine__remove,
+.training-routine__saved .settings-link-button {
+  color: var(--color-ink-on-light-muted);
 }
 
 .training-routine__summary {

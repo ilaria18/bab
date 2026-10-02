@@ -21,7 +21,7 @@ export const Greeting = ({ welcome = false }: { welcome?: boolean }) => {
     name.trim() ||
     t({ message: 'Champ', comment: 'Friendly name the greeting uses until the user enters their own' })
   // the notifications greet her by name too (kept on the phone, see notificationTitle.ts)
-  const notificationTitle = name.trim() ? t`Hi, ${displayName}` : null
+  const notificationTitle = name.trim() ? t`Hi ${displayName}, BAB here` : null
   useEffect(() => {
     void saveNotificationTitle(notificationTitle)
   }, [notificationTitle])

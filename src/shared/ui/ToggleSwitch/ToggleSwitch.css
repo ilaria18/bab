@@ -4,7 +4,7 @@
 }
 
 .toggle-switch__option {
-    border: none;
+    border: 1.5px solid var(--color-border);
     background: transparent;
     padding: 14px 24px;
     border-radius: 16px;
@@ -15,8 +15,16 @@
     cursor: pointer;
 }
 
+/* selected: filled with the brand colour, so it never looks like a dropdown or a text field */
 .toggle-switch__option[aria-pressed='true'] {
-    background: var(--color-surface-raised);
-    color: var(--color-ink);
+    border-color: var(--color-anchor);
+    background: var(--color-anchor);
+    color: var(--color-ground);
     font-weight: 700;
+}
+
+:root[data-theme='dark'] .toggle-switch__option[aria-pressed='true'] {
+    border-color: var(--color-energy);
+    background: var(--color-energy);
+    color: var(--color-ink-on-light);
 }

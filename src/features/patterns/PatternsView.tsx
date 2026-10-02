@@ -282,7 +282,7 @@ export const PatternsView = () => {
         )}
       </Card>
 
-      <Card title={<Trans>Energy and good days</Trans>}>
+      <Card title={<Trans>Energy</Trans>}>
         {energy.ready ? (
           <>
             <p className="pattern-card__text">
@@ -308,7 +308,7 @@ export const PatternsView = () => {
           {positiveCount > 0 ? (
             <Trans>You felt strong or light {positiveCount} times in the last 30 days.</Trans>
           ) : (
-            <Trans>Good sensations count too: when you feel strong or light, note it!</Trans>
+            <Trans>Every sensation is valid: when you feel strong or light, notice it and log it.</Trans>
           )}
         </p>
       </Card>

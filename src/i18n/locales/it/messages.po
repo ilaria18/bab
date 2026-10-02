@@ -793,8 +793,8 @@ msgid "Do a check-in before and after 2 training sessions to see the difference.
 msgstr "Fai un check-in prima e dopo 2 allenamenti per vedere la differenza."
 
 #: src/features/patterns
-msgid "Energy and good days"
-msgstr "Energia e giornate buone"
+msgid "Energy"
+msgstr "Energia"
 
 #: src/features/patterns
 msgid "Your energy in the last 2 weeks is higher than in the 2 before."
@@ -829,8 +829,8 @@ msgid "You felt strong or light {positiveCount} times in the last 30 days."
 msgstr "Negli ultimi 30 giorni ti sei sentita forte o leggera {positiveCount} volte."
 
 #: src/features/patterns
-msgid "Good sensations count too: when you feel strong or light, note it!"
-msgstr "Contano anche le sensazioni belle: quando ti senti forte o leggera, segnalo!"
+msgid "Every sensation is valid: when you feel strong or light, notice it and log it."
+msgstr "Ogni sensazione è valida: quando ti senti forte o leggera, facci caso e segnalo."
 
 #: src/features/reminder
 msgid "Edit"
@@ -885,12 +885,12 @@ msgid "Notifications"
 msgstr "Notifiche"
 
 #: src/features/feedback
-msgid "Tell us"
+msgid "Tell Us"
 msgstr "Dicci la tua"
 
 #: src/features/feedback
-msgid "Anonymous: we don't receive your name. Don't write names or health details. Every message is read by the BAB team."
-msgstr "Anonimo: non riceviamo il tuo nome. Non scrivere nomi né dati sulla salute. Ogni messaggio viene letto dal team BAB."
+msgid "Help us co-design BAB to support other girls in sport. This is a safe space to share anonymous opinions and ideas."
+msgstr "Aiutaci a co-creare BAB per supportare altre ragazze nello sport. Questo è uno spazio sicuro dove condividere opinioni e idee in modo anonimo."
 
 #: src/features/feedback
 msgid "Thank you! Your message has reached the BAB team."
@@ -939,3 +939,7 @@ msgstr "Anteprima: le notifiche arrivano solo nell'app installata sul telefono."
 #: src/features/usage-stats/UsageStatsSetting.tsx
 msgid "Preview: statistics are sent only by the app installed on your phone."
 msgstr "Anteprima: le statistiche vengono inviate solo dall'app installata sul telefono."
+
+#: src/shared/ui/Greeting/Greeting.tsx
+msgid "Hi {displayName}, BAB here"
+msgstr "Ciao {displayName}, sono BAB"

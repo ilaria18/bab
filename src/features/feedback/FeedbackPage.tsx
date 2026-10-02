@@ -56,10 +56,10 @@ export const FeedbackPage = () => {
       <Greeting />
       <div className="feedback-wrapper">
         <h1 className="feedback-title">
-          <Trans>Tell us</Trans>
+          <Trans>Tell Us</Trans>
         </h1>
         <p className="feedback-hint">
-          <Trans>Anonymous: we don't receive your name. Don't write names or health details. Every message is read by the BAB team.</Trans>
+          <Trans>Help us co-design BAB to support other girls in sport. This is a safe space to share anonymous opinions and ideas.</Trans>
         </p>
 
         {state === 'sent' ? (

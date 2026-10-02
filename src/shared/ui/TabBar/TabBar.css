@@ -11,7 +11,7 @@
   /* space under the labels: on iPhone the bar may overlap the home indicator's area a little
      (Apple's own tab bars do), so only part of the safe area is added; never less than 6px */
   --tab-bar-bottom: max(6px, calc(var(--safe-bottom) - 16px));
-  --tab-bar-height: calc(52px + var(--tab-bar-bottom));
+  --tab-bar-height: calc(56px + var(--tab-bar-bottom));
 }
 
 .tab-bar {
@@ -51,7 +51,24 @@
 
 .tab-bar-icon {
   display: flex;
+  padding: 2px 14px;
+  border-radius: 14px;
   line-height: 1;
+}
+
+/* the open tab: a filled pill behind its icon and a bold label, clear in both themes */
+.tab-bar-item-active .tab-bar-icon {
+  background: var(--color-anchor);
+  color: var(--color-ground);
+}
+
+.tab-bar-item-active .tab-bar-label {
+  font-weight: 700;
+}
+
+:root[data-theme='dark'] .tab-bar-item-active .tab-bar-icon {
+  background: var(--color-energy);
+  color: var(--color-ink-on-light);
 }
 
 .tab-bar-label {
