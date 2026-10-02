@@ -82,9 +82,55 @@ const totalsOf = (rows: VisitRow[], firstFlag: 'first_of_day' | 'first_of_week')
   return t
 }
 
+export type RoutineWeekRow = {
+  week: string
+  sessions: { day: number; kind: string; start: string; end: string }[] | null
+  platform: string
+}
+
+const minutesOf = (time: string) => {
+  const [h, m] = time.split(':').map(Number)
+  return h * 60 + m
+}
+const median = (values: number[]) => {
+  if (!values.length) return null
+  const s = [...values].sort((a, b) => a - b)
+  const m = Math.floor(s.length / 2)
+  return s.length % 2 ? s[m] : round1((s[m - 1] + s[m]) / 2)
+}
+const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+/** The weekly routines (one row per phone and week, no identifier): the planned training load.
+ * Every figure needs at least MIN_GROUP phones reporting that week. */
+const routineWeeks = (start: string, rows: RoutineWeekRow[]) =>
+  Array.from({ length: PILOT_WEEKS }, (_, i) => {
+    const from = addDays(start, i * 7)
+    const list = rows.filter((r) => r.week === isoWeek(from))
+    const withRoutine = list.filter((r) => (r.sessions ?? []).length > 0)
+    const ok = list.length >= MIN_GROUP
+    const okRoutine = withRoutine.length >= MIN_GROUP
+    const sessions = (r: RoutineWeekRow) => r.sessions ?? []
+    const minutes = (r: RoutineWeekRow, kind: string) =>
+      sessions(r).filter((s) => s.kind === kind).reduce((sum, s) => sum + Math.max(minutesOf(s.end) - minutesOf(s.start), 0), 0)
+    return {
+      pilotWeek: i + 1,
+      from,
+      reported: list.length,
+      withRoutinePct: ok ? pct(withRoutine.length, list.length) : null,
+      sessionsPerAthlete: okRoutine ? median(withRoutine.map((r) => sessions(r).length)) : null,
+      trainingMinutes: okRoutine ? median(withRoutine.map((r) => minutes(r, 'training'))) : null,
+      matchMinutes: okRoutine ? median(withRoutine.map((r) => minutes(r, 'match'))) : null,
+      matches: okRoutine ? median(withRoutine.map((r) => sessions(r).filter((s) => s.kind === 'match').length)) : null,
+      /** share of the athletes with a routine who have a session on each weekday */
+      byWeekday: okRoutine
+        ? WEEKDAYS.map((label, d) => ({ label, pct: pct(withRoutine.filter((r) => sessions(r).some((s) => s.day === d + 1)).length, withRoutine.length) }))
+        : [],
+    }
+  })
+
 export type PilotMetrics = ReturnType<typeof computeMetrics>
 
-export const computeMetrics = (start: string, allVisits: VisitRow[], platform: string | null) => {
+export const computeMetrics = (start: string, allVisits: VisitRow[], platform: string | null, allRoutines: RoutineWeekRow[] = []) => {
   const end = addDays(start, PILOT_DAYS)
   const visits = allVisits.filter((r) => r.day >= start && r.day < end && (!platform || r.platform === platform))
   const pilotWeekOf = (day: string) => Math.floor(daysBetween(start, day) / 7) + 1
@@ -185,5 +231,6 @@ export const computeMetrics = (start: string, allVisits: VisitRow[], platform: s
     weeks,
     retention,
     lengths,
+    routines: routineWeeks(start, allRoutines.filter((r) => !platform || r.platform === platform)),
   }
 }

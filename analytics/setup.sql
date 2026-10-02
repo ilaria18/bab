@@ -32,6 +32,15 @@ create table if not exists usage_visits (
 );
 alter table usage_visits enable row level security;
 
+-- One row per phone and week, sent with the first visit of the week (same consent as the visits):
+-- the training/match routine entered in Settings. No identifier; not linked to the visits.
+create table if not exists usage_routines (
+  week      text  not null,                         -- ISO week, e.g. 2026-W41
+  sessions  jsonb not null default '[]',            -- [{ day: 1-7, kind: training|match, start, end }]; [] = none entered
+  platform  text  not null check (platform in ('ios', 'android', 'web'))
+);
+alter table usage_routines enable row level security;
+
 
 -- ── 2. Notifications of the web app ──────────────────────────────────────────────────────────
 -- One row per phone that switched the reminder on. Deleted when switched off, when the push

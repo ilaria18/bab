@@ -3,6 +3,7 @@ import { differenceInCalendarDays, getISOWeek, getISOWeekYear, parseISO } from '
 import { appPlatform, isInstalledWebApp, isNativeApp, type AppPlatform } from '@/shared/lib/platform'
 import { toDateKey } from '@/shared/lib/dateKey'
 import { safeStorage } from '@/shared/lib/safeStorage'
+import { getTrainingRoutine, type Session } from '@/features/reminder/trainingRoutine'
 
 /**
  * Anonymous usage statistics.
@@ -50,8 +51,26 @@ export type UsageEvent = {
   reminder_on: boolean
 }
 
-/** what goes to the server: only visit rows (older versions also sent a weekly summary) */
-export type UsageRow = UsageEvent
+/**
+ * Once a week (with the first visit of the week) the phone also sends the training/match routine
+ * the athlete entered in Settings — weekday, kind, start, end — with no identifier, like the visits,
+ * and not linked to them: it shows the teams' training load. An empty list = no routine entered.
+ */
+export type RoutineRow = {
+  v: 3
+  kind: 'routine'
+  /** ISO week, e.g. 2026-W41 */
+  week: string
+  sessions: Session[]
+  platform: AppPlatform
+}
+
+/** what goes to the server: visit rows, and the weekly routine row */
+export type UsageRow = UsageEvent | RoutineRow
+
+/** routine rows go to their own endpoint next to the visits' one: /api/usage → /api/usage-routine */
+export const routineEndpoint = (endpoint: string): string | null =>
+  /\/api\/usage\/?$/.test(endpoint) ? endpoint.replace(/\/api\/usage\/?$/, '/api/usage-routine') : null
 
 type State = {
   consent: boolean
@@ -151,9 +170,14 @@ type Options = {
   now?: () => number
   send?: (endpoint: string, events: UsageRow[]) => Promise<boolean>
   doc?: Document
+  /** the training routine to report once a week (Settings → Training and matches) */
+  routine?: () => Session[]
 }
 
-const defaultSend = async (endpoint: string, events: UsageRow[]): Promise<boolean> => {
+const isRoutineRow = (row: UsageRow): row is RoutineRow => 'kind' in row && row.kind === 'routine'
+
+const post = async (endpoint: string, events: UsageRow[]): Promise<boolean> => {
+  if (events.length === 0) return true
   try {
     const response = await fetch(endpoint, {
       method: 'POST',
@@ -171,6 +195,17 @@ const defaultSend = async (endpoint: string, events: UsageRow[]): Promise<boolea
   }
 }
 
+const defaultSend = async (endpoint: string, events: UsageRow[]): Promise<boolean> => {
+  const routines = events.filter(isRoutineRow)
+  const visits = events.filter((row) => !isRoutineRow(row))
+  const routineUrl = routineEndpoint(endpoint)
+  const [visitsOk, routinesOk] = await Promise.all([
+    post(endpoint, visits),
+    routineUrl ? post(routineUrl, routines) : Promise.resolve(true),
+  ])
+  return visitsOk && routinesOk
+}
+
 /** Starts measuring visits. Returns a function that stops listening (used by tests). */
 export const startUsageStats = ({
   endpoint = import.meta.env.VITE_USAGE_ENDPOINT as string | undefined,
@@ -180,6 +215,7 @@ export const startUsageStats = ({
   now = Date.now,
   send = defaultSend,
   doc = document,
+  routine = getTrainingRoutine,
 }: Options = {}): (() => void) => {
   if (!endpoint || !counted) return () => {}
 
@@ -244,7 +280,13 @@ export const startUsageStats = ({
       lastWeek: week,
       lastLifeWeek: lifeWeek,
       lastHiddenAt: endedAt,
-      queue: [...state.queue.filter((row) => !('kind' in row)), event].slice(-MAX_QUEUE),
+      queue: [
+        // weekly summaries sent by older versions are dropped
+        ...state.queue.filter((row) => !('kind' in row) || isRoutineRow(row)),
+        // the first visit of a week also reports the routine as it stands
+        ...(event.first_of_week ? [{ v: 3 as const, kind: 'routine' as const, week, sessions: routine(), platform }] : []),
+        event,
+      ].slice(-MAX_QUEUE),
     })
     void flush()
   }

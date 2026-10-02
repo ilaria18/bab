@@ -501,8 +501,8 @@ msgid "Don't share"
 msgstr "Non condividere"
 
 #: src/features/usage-stats/UsageStatsSetting.tsx
-msgid "Help us improve BAB: the app only sends how often and for how long it is opened, day by day. Never what you record, never your name, never anything that identifies you or your phone."
-msgstr "Aiutaci a migliorare BAB: l’app invia solo quante volte e per quanto tempo viene aperta, giorno per giorno. Mai quello che registri, mai il tuo nome, mai nulla che identifichi te o il tuo telefono."
+msgid "Help us improve BAB: the app only sends how often and for how long it is opened, day by day, and the days and times of your training and matches. Never your check-ins, never your name, never anything that identifies you or your phone."
+msgstr "Aiutaci a migliorare BAB: l’app invia solo quante volte e per quanto tempo viene aperta, giorno per giorno, e i giorni e gli orari dei tuoi allenamenti e partite. Mai i tuoi check-in, mai il tuo nome, mai nulla che identifichi te o il tuo telefono."
 
 #: src/features/reminder
 msgid "Daily reminder"
@@ -845,8 +845,8 @@ msgid "A notification 3 hours before and 2 hours after, instead of the daily one
 msgstr "Una notifica 3 ore prima e una 2 ore dopo, al posto di quella giornaliera."
 
 #: src/features/settings
-msgid "Only how often and how long you open the app. Never what you write."
-msgstr "Solo quante volte e per quanto tempo apri l’app. Mai cosa scrivi."
+msgid "Only how often and how long you open the app, and your training times. Never your check-ins."
+msgstr "Solo quante volte e per quanto tempo apri l’app, e gli orari dei tuoi allenamenti. Mai i tuoi check-in."
 
 #: src/features/settings
 msgid "Saved only on this phone: don't delete the app. Send them to BAB without your name."

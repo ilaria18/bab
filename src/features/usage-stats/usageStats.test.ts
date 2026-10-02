@@ -5,7 +5,9 @@ import {
   recordReminderActive,
   setUsageConsent,
   startUsageStats,
+  routineEndpoint,
   usageStatsCounted,
+  type RoutineRow,
   type UsageEvent,
   type UsageRow,
 } from './usageStats'
@@ -21,6 +23,8 @@ describe('usage stats', () => {
   let clock = 0
   let rows: UsageRow[] = []
   let sent: UsageEvent[] = []
+  let routines: RoutineRow[] = []
+  let routine: { day: 1 | 6; kind: 'training' | 'match'; start: string; end: string }[] = []
   let stop = () => {}
 
   const start = () => {
@@ -30,9 +34,11 @@ describe('usage stats', () => {
       now: () => clock,
       send: async (_endpoint, events) => {
         rows.push(...events)
-        sent = rows
+        sent = rows.filter((row): row is UsageEvent => !('kind' in row))
+        routines = rows.filter((row): row is RoutineRow => 'kind' in row)
         return true
       },
+      routine: () => routine,
     })
   }
 
@@ -47,6 +53,8 @@ describe('usage stats', () => {
   beforeEach(() => {
     rows = []
     sent = []
+    routines = []
+    routine = []
     recordReminderActive(false)
     Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' })
   })
@@ -82,6 +90,22 @@ describe('usage stats', () => {
     sent.forEach((e) => expect(Object.keys(e).sort()).toEqual(
       ['checkins', 'cohort_week', 'continued', 'day', 'first_ever', 'first_of_day', 'first_of_life_week', 'first_of_week', 'from_reminder', 'platform', 'reminder_on', 'seconds', 'v', 'week_since_first'],
     ))
+  })
+
+  it('reports the training routine once a week, with no identifier and not linked to the visits', async () => {
+    setUsageConsent(true)
+    start()
+    routine = [{ day: 1, kind: 'training', start: '18:00', end: '20:00' }]
+    await visit('2026-09-28T10:00:00', 60) // first visit of week 40
+    routine = [...routine, { day: 6, kind: 'match', start: '17:00', end: '19:00' }]
+    await visit('2026-09-29T10:00:00', 60) // same week: nothing new
+    await visit('2026-10-05T10:00:00', 60) // week 41: the routine as it stands now
+    expect(routines).toEqual([
+      { v: 3, kind: 'routine', week: '2026-W40', sessions: [{ day: 1, kind: 'training', start: '18:00', end: '20:00' }], platform: 'web' },
+      { v: 3, kind: 'routine', week: '2026-W41', sessions: routine, platform: 'web' },
+    ])
+    expect(routineEndpoint('https://bab-analytics.vercel.app/api/usage')).toBe('https://bab-analytics.vercel.app/api/usage-routine')
+    expect(routineEndpoint('https://example.test/other')).toBeNull()
   })
 
   it('counts a quick return as the same visit', async () => {

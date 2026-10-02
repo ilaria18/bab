@@ -38,7 +38,7 @@ export const UsageStatsSetting = ({
       </span>
       <ToggleSwitch options={options} value={choice} onChange={change} />
       <p className="settings-hint">
-        <Trans>Only how often and how long you open the app. Never what you write.</Trans>
+        <Trans>Only how often and how long you open the app, and your training times. Never your check-ins.</Trans>
       </p>
       {preview && (
         <p className="settings-hint">

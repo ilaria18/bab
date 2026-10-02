@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import { timingSafeEqual } from 'node:crypto'
-import { computeMetrics, PILOT_DAYS, type VisitRow } from './_metrics.js'
+import { computeMetrics, isoWeek, PILOT_DAYS, PILOT_WEEKS, type RoutineWeekRow, type VisitRow } from './_metrics.js'
 import { dbError } from './_reminders.js'
 
 /**
@@ -75,8 +75,14 @@ export async function GET(request: Request): Promise<Response> {
   const end = new Date(Date.parse(`${start}T00:00:00Z`) + PILOT_DAYS * 86_400_000).toISOString().slice(0, 10)
 
   try {
-    const visits = await readAll<VisitRow>('usage_visits', `select=*&day=gte.${start}&day=lt.${end}`)
-    return json(200, { ...computeMetrics(start, visits, platform), pilotStart: process.env.PILOT_START ?? null })
+    const weeks = Array.from({ length: PILOT_WEEKS }, (_, i) =>
+      isoWeek(new Date(Date.parse(`${start}T00:00:00Z`) + i * 7 * 86_400_000).toISOString().slice(0, 10)),
+    )
+    const [visits, routines] = await Promise.all([
+      readAll<VisitRow>('usage_visits', `select=*&day=gte.${start}&day=lt.${end}`),
+      readAll<RoutineWeekRow>('usage_routines', `select=week,sessions,platform&week=in.(${weeks.join(',')})`),
+    ])
+    return json(200, { ...computeMetrics(start, visits, platform, routines), pilotStart: process.env.PILOT_START ?? null })
   } catch (error) {
     console.error('Could not read the pilot data', error)
     return json(502, { error: 'database' })

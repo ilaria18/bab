@@ -32,8 +32,8 @@ export const UsageConsentPrompt = ({
         <p className="consent-prompt__text">
           <Trans>
             Help us improve BAB: the app only sends how often and for how long it is opened, day by
-            day. Never what you record, never your name, never anything that identifies you or your
-            phone.
+            day, and the days and times of your training and matches. Never your check-ins, never your
+            name, never anything that identifies you or your phone.
           </Trans>
         </p>
         <div className="consent-prompt__actions">

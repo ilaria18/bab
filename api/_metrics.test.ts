@@ -31,3 +31,16 @@ describe('pilot metrics', () => {
     expect(computeMetrics('2026-10-05', rows, 'ios').days[0].openings).toBe(1)
   })
 })
+
+describe('training routines', () => {
+  it('summarises the weekly routines only with at least 5 phones', () => {
+    const r = (sessions: { day: number; kind: string; start: string; end: string }[]) => ({ week: '2026-W41', sessions, platform: 'android' })
+    const training = { day: 1, kind: 'training', start: '18:00', end: '20:00' }
+    const match = { day: 6, kind: 'match', start: '17:00', end: '19:00' }
+    const rows = [r([training, match]), r([training, match]), r([training]), r([training, { ...training, day: 3 }]), r([training, match]), r([])]
+    const m = computeMetrics('2026-10-05', [], null, rows)
+    expect(m.routines[0]).toMatchObject({ reported: 6, withRoutinePct: 83, sessionsPerAthlete: 2, trainingMinutes: 120, matches: 1 })
+    expect(m.routines[0].byWeekday[0]).toEqual({ label: 'Mon', pct: 100 })
+    expect(computeMetrics('2026-10-05', [], null, rows.slice(0, 3)).routines[0]).toMatchObject({ reported: 3, withRoutinePct: null, byWeekday: [] })
+  })
+})

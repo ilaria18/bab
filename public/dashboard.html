@@ -199,6 +199,13 @@
         </article>
 
         <article class="card wide">
+          <h2>Training routines</h2>
+          <p class="sub">The weekly training and match plan the athletes entered in the app, sent once a week without a name and not linked to the visits. Medians among athletes with a routine; hidden under 5 phones.</p>
+          <div class="scroll" id="table-routines"></div>
+          <p class="sub" id="routine-weekdays" style="margin-top:10px"></p>
+        </article>
+
+        <article class="card wide">
           <h2>Daily data</h2>
           <p class="sub">The full table, day by day.</p>
           <details>
@@ -515,6 +522,17 @@
         fmt(w.daysUsedPerUser), fmt(w.checkins), fmt(w.checkinsPerUser), fmt(w.openingsFromReminderPct, '%'),
         fmt(w.reminderOnPct, '%'), fmt(w.minutesPerOpening), fmt(w.minutesPerUser),
       ]))
+    const routines = data.routines ?? []
+    table($('table-routines'),
+      ['Week', 'Phones reporting', 'With a routine', 'Sessions / week', 'Training min / week', 'Match min / week', 'Matches / week'],
+      routines.map((w) => [
+        `${w.pilotWeek} (${dateIt(w.from)})`, fmt(w.reported), fmt(w.withRoutinePct, '%'), fmt(w.sessionsPerAthlete),
+        fmt(w.trainingMinutes), fmt(w.matchMinutes), fmt(w.matches),
+      ]))
+    const lastWithDays = [...routines].reverse().find((w) => w.byWeekday.length)
+    $('routine-weekdays').textContent = lastWithDays
+      ? `Week ${lastWithDays.pilotWeek}, athletes with a session on each day: ` + lastWithDays.byWeekday.map((d) => `${d.label} ${d.pct}%`).join(' · ')
+      : ''
     table($('table-days'),
       ['Day', 'Active athletes', 'Openings', 'Check-ins', 'From reminder', 'Min / opening'],
       data.days.map((d) => [
