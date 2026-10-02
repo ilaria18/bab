@@ -158,9 +158,6 @@ export const TrainingRoutineSetting = ({ onChange }: { onChange: () => void }) =
         )
       )}
 
-      <p className="settings-hint">
-        <Trans>A notification 3 hours before and 2 hours after, instead of the daily one.</Trans>
-      </p>
     </div>
   )
 }
