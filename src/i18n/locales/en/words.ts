@@ -49,7 +49,7 @@ export const words: Record<WordId, WordText> = {
     description:
       'A deep, heavy-ish feeling spread through the muscles rather than one specific spot. Dull and vague without clear edges. Often it concerns several body parts at once.',
     feelsLike:
-      'A dull and deep feeling that lingers. A muscle saying, "I\'ve done a lot today and I want you to know."',
+      'A dull and deep feeling that lingers. The body part is complaining and wants you to know.',
     recommendation:
       'Your muscles are processing a lot. Stretch, hydrate, fuel well, and get some good sleep. If it keeps coming back, check your recovery with your coach.',
   },

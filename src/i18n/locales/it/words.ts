@@ -55,7 +55,7 @@ export const words: Record<WordId, WordText> = {
     description:
       'Una sensazione profonda, continua e poco definita, che si presenta come un fastidio costante e diffuso. Spesso coinvolge più parti del corpo.',
     feelsLike:
-      'Se quella parte del corpo dicesse: «oggi ho lavorato tanto e voglio fartelo sapere».',
+      'Se quella parte del corpo si stesse lamentando e volesse assicurarsi di fartelo sapere. Una sensazione tollerabile ma spossante.',
     recommendation:
       'I tuoi muscoli stanno facendo gli straordinari.. Fai stretching, idratati, nutriti bene e dormi a sufficienza. Se continua a ripresentarsi, parlane con il tuo allenatore e controllate insieme come stai recuperando.',
   },
