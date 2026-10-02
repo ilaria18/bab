@@ -61,9 +61,10 @@ const ALL_IDS = [
 const isReminderId = (id: number) => ALL_IDS.includes(id)
 /** Capacitor counts weekdays from Sunday = 1 */
 const capacitorWeekday = (dow: IsoWeekday) => (dow % 7) + 1
-const TIME = /^([01]\d|2[0-3]):[0-5]\d$/
 
-export const DEFAULT_REMINDER: ReminderSettings = { enabled: true, time: '19:00' }
+/** The daily reminder is always at 19:00: the athlete can switch it off, not move it. */
+export const REMINDER_TIME = '19:00'
+export const DEFAULT_REMINDER: ReminderSettings = { enabled: true, time: REMINDER_TIME }
 
 export const getReminderSettings = (): ReminderSettings => {
   try {
@@ -71,7 +72,8 @@ export const getReminderSettings = (): ReminderSettings => {
     if (!stored) return DEFAULT_REMINDER
     return {
       enabled: typeof stored.enabled === 'boolean' ? stored.enabled : DEFAULT_REMINDER.enabled,
-      time: typeof stored.time === 'string' && TIME.test(stored.time) ? stored.time : DEFAULT_REMINDER.time,
+      // a time chosen in an older version is ignored
+      time: REMINDER_TIME,
     }
   } catch {
     return DEFAULT_REMINDER

@@ -28,6 +28,18 @@ describe('ReminderSetting', () => {
     expect(scheduled.schedule).toEqual({ on: { hour: 19, minute: 0 }, repeats: true })
   })
 
+  it('is always at 19:00: no time to choose, and a time saved by an older version is ignored', async () => {
+    localStorage.setItem('daily-reminder', JSON.stringify({ enabled: true, time: '07:30' }))
+    render(<ReminderSetting available />)
+    await waitFor(() => expect(notifications.schedule).toHaveBeenCalledTimes(1))
+    const [{ notifications: [scheduled] }] = notifications.schedule.mock.calls[0] as unknown as [
+      { notifications: [{ schedule: unknown }] },
+    ]
+    expect(scheduled.schedule).toEqual({ on: { hour: 19, minute: 0 }, repeats: true })
+    expect(document.querySelector('input[type="time"]')).toBeNull()
+    localStorage.removeItem('daily-reminder')
+  })
+
   it('cancels the notification when switched off', async () => {
     render(<ReminderSetting available />)
     await waitFor(() => expect(notifications.schedule).toHaveBeenCalledTimes(1))

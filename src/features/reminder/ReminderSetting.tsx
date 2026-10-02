@@ -12,8 +12,9 @@ import {
 import { askWebNotificationPermission } from './webReminder'
 import { TrainingRoutineSetting } from './TrainingRoutineSetting'
 
-/** Daily reminder on/off and its time. In the native app and in the web app installed on the home
- * screen; not in a browser tab. */
+/** Daily reminder on/off (always at 19:00; on training/match days the notifications around the
+ * session instead). In the native app and in the web app installed on the home screen; not in a
+ * browser tab. */
 export const ReminderSetting = ({ available = reminderAvailable() }: { available?: boolean }) => {
   const { t } = useLingui()
   const [settings, setSettings] = useState<ReminderSettings>(getReminderSettings)
@@ -52,19 +53,9 @@ export const ReminderSetting = ({ available = reminderAvailable() }: { available
         onChange={(value) => update({ ...settings, enabled: value === 'on' })}
       />
       {settings.enabled && (
-        <label className="settings-reminder-time">
-          <span>
-            <Trans>Time</Trans>
-          </span>
-          <input
-            className="settings-name-input"
-            type="time"
-            value={settings.time}
-            onChange={(event) => {
-              if (event.target.value) update({ ...settings, time: event.target.value })
-            }}
-          />
-        </label>
+        <p className="settings-hint">
+          <Trans>Every day at 19:00. On training and match days: 3 hours before and 2 hours after.</Trans>
+        </p>
       )}
       {settings.enabled && status === 'needs-permission' && (
         <Button onClick={() => void allowNotifications()}>

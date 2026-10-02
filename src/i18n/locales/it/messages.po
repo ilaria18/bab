@@ -927,3 +927,7 @@ msgstr "Invia"
 #: src/features/feedback
 msgid "It didn't go through. Check your connection and try again: your message is still here."
 msgstr "Non è partito. Controlla la connessione e riprova: il tuo messaggio è ancora qui."
+
+#: src/features/reminder/ReminderSetting.tsx
+msgid "Every day at 19:00. On training and match days: 3 hours before and 2 hours after."
+msgstr "Ogni giorno alle 19:00. Nei giorni di allenamento e partita: 3 ore prima e 2 ore dopo."
