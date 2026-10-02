@@ -931,3 +931,11 @@ msgstr "Non è partito. Controlla la connessione e riprova: il tuo messaggio è 
 #: src/features/reminder/ReminderSetting.tsx
 msgid "Every day at 19:00. On training and match days: 3 hours before and 2 hours after."
 msgstr "Ogni giorno alle 19:00. Nei giorni di allenamento e partita: 3 ore prima e 2 ore dopo."
+
+#: src/features/reminder/ReminderSetting.tsx
+msgid "Preview: notifications arrive only in the app installed on your phone."
+msgstr "Anteprima: le notifiche arrivano solo nell'app installata sul telefono."
+
+#: src/features/usage-stats/UsageStatsSetting.tsx
+msgid "Preview: statistics are sent only by the app installed on your phone."
+msgstr "Anteprima: le statistiche vengono inviate solo dall'app installata sul telefono."

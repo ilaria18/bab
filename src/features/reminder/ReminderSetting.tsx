@@ -13,8 +13,9 @@ import { askWebNotificationPermission } from './webReminder'
 import { TrainingRoutineSetting } from './TrainingRoutineSetting'
 
 /** Daily reminder on/off (always at 19:00; on training/match days the notifications around the
- * session instead). In the native app and in the web app installed on the home screen; not in a
- * browser tab. */
+ * session instead). Sent only by the native app and the web app installed on the home screen. In a
+ * browser tab (e.g. a tutorial on a laptop) the setting is shown as a preview: nothing is scheduled
+ * and nothing is sent to the server. */
 export const ReminderSetting = ({ available = reminderAvailable() }: { available?: boolean }) => {
   const { t } = useLingui()
   const [settings, setSettings] = useState<ReminderSettings>(getReminderSettings)
@@ -23,8 +24,6 @@ export const ReminderSetting = ({ available = reminderAvailable() }: { available
   useEffect(() => {
     if (available) void syncDailyReminder(settings).then(setStatus)
   }, [available, settings])
-
-  if (!available) return null
 
   const update = (next: ReminderSettings) => {
     saveReminderSettings(next)
@@ -67,10 +66,12 @@ export const ReminderSetting = ({ available = reminderAvailable() }: { available
           <Trans>Tap “Allow notifications” so BAB can send you the reminder.</Trans>
         ) : status === 'blocked' ? (
           <Trans>Notifications are blocked for BAB. Turn them on in your phone's settings.</Trans>
+        ) : !available ? (
+          <Trans>Preview: notifications arrive only in the app installed on your phone.</Trans>
         ) : null}
       </p>
       {settings.enabled && (
-        <TrainingRoutineSetting onChange={() => void syncDailyReminder(settings).then(setStatus)} />
+        <TrainingRoutineSetting onChange={() => available && void syncDailyReminder(settings).then(setStatus)} />
       )}
     </div>
   )

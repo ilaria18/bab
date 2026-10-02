@@ -931,3 +931,11 @@ msgstr "It didn't go through. Check your connection and try again: your message 
 #: src/features/reminder/ReminderSetting.tsx
 msgid "Every day at 19:00. On training and match days: 3 hours before and 2 hours after."
 msgstr "Every day at 19:00. On training and match days: 3 hours before and 2 hours after."
+
+#: src/features/reminder/ReminderSetting.tsx
+msgid "Preview: notifications arrive only in the app installed on your phone."
+msgstr "Preview: notifications arrive only in the app installed on your phone."
+
+#: src/features/usage-stats/UsageStatsSetting.tsx
+msgid "Preview: statistics are sent only by the app installed on your phone."
+msgstr "Preview: statistics are sent only by the app installed on your phone."

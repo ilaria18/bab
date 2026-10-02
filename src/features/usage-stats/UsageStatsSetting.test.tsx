@@ -6,7 +6,7 @@ import { getUsageConsent } from './usageStats'
 
 describe('UsageStatsSetting', () => {
   it('is off until the athlete chooses to share, and can be switched off again', async () => {
-    render(<UsageStatsSetting enabled />)
+    render(<UsageStatsSetting enabled preview={false} />)
     expect(getUsageConsent()).toBe(false)
     expect(screen.getByRole('button', { name: "Don't share" }).getAttribute('aria-pressed')).toBe('true')
 
@@ -14,6 +14,13 @@ describe('UsageStatsSetting', () => {
     expect(getUsageConsent()).toBe(true)
 
     await userEvent.click(screen.getByRole('button', { name: "Don't share" }))
+    expect(getUsageConsent()).toBe(false)
+  })
+
+  it('in a browser tab is only a preview: the choice is not saved', async () => {
+    render(<UsageStatsSetting enabled preview />)
+    expect(screen.getByText(/Preview: statistics are sent only/)).toBeTruthy()
+    await userEvent.click(screen.getByRole('button', { name: 'Share' }))
     expect(getUsageConsent()).toBe(false)
   })
 

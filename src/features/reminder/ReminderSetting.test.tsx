@@ -49,6 +49,14 @@ describe('ReminderSetting', () => {
     expect(screen.queryByLabelText('Time')).toBeNull()
   })
 
+  it('in a browser tab shows the setting as a preview, without scheduling anything', async () => {
+    render(<ReminderSetting available={false} />)
+    expect(await screen.findByText(/Preview: notifications arrive only/)).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Off' })).toBeTruthy()
+    expect(notifications.cancel).not.toHaveBeenCalled()
+    expect(notifications.schedule).not.toHaveBeenCalled()
+  })
+
   it('tells the athlete when notifications are blocked on the phone', async () => {
     notifications.checkPermissions.mockResolvedValueOnce({ display: 'denied' })
     render(<ReminderSetting available />)
