@@ -140,7 +140,8 @@ describe('usage stats', () => {
       now: () => clock,
       send: async (_e, events) => {
         if (!online) return false
-        sent.push(...(events as UsageEvent[]))
+        // the weekly routine row travels with the visits; only the visits are counted here
+        sent.push(...(events.filter((row) => !('kind' in row)) as UsageEvent[]))
         return true
       },
     })
