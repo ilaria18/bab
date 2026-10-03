@@ -32,11 +32,18 @@ const within = (entries: CheckInEntry[], until: string, days: number) => {
   return entries.filter((e) => e.date >= from && e.date <= until)
 }
 
+/** most recent first, so that on equal counts the one used last comes first */
+const newestFirst = (list: CheckInEntry[]) =>
+  [...list].sort((a, b) => `${b.date} ${b.createdAt}`.localeCompare(`${a.date} ${a.createdAt}`))
+
+/** how many times each key appears; on equal counts, the key met first in `keys` wins
+ * (callers pass keys newest first: the most recently used comes first) */
 const topCounts = <K extends string>(keys: K[], limit: number) => {
   const counts = new Map<K, number>()
   for (const key of keys) counts.set(key, (counts.get(key) ?? 0) + 1)
+  // Array.prototype.sort is stable: equal counts keep the order they were first met in
   return [...counts.entries()]
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .sort((a, b) => b[1] - a[1])
     .slice(0, limit)
     .map(([key, count]) => ({ key, count }))
 }
@@ -51,7 +58,7 @@ export const cycleCard = (entries: CheckInEntry[], logs: DailyLog[]) => {
   const otherDays = entries.filter((e) => periodByDay.get(e.date) === false)
   const need = 3
   const p = progress(Math.min(onPeriod.length, need) + Math.min(otherDays.length, need), 2 * need)
-  const top = topCounts(onPeriod.filter(isSymptom).map((e) => e.wordId), 1)[0]
+  const top = topCounts(newestFirst(onPeriod.filter(isSymptom)).map((e) => e.wordId), 1)[0]
   return {
     ...p,
     period: { intensity: intensityOf(onPeriod), energy: energyOf(onPeriod), checkIns: onPeriod.length },
@@ -69,7 +76,8 @@ export const wordsCard = (entries: CheckInEntry[], today: string) => {
   const beforeCounts = new Map(topCounts(before.map((e) => e.wordId), 99).map((c) => [c.key, c.count]))
   return {
     ...progress(last.length, 5),
-    top: topCounts(last.map((e) => e.wordId), 3).map(({ key, count }) => {
+    // each check-in counts once for its word
+    top: topCounts(newestFirst(last).map((e) => e.wordId), 3).map(({ key, count }) => {
       const previous = beforeCounts.get(key) ?? 0
       const trend: Trend = before.length === 0 ? 'same' : previous === 0 ? 'new' : count > previous ? 'up' : count < previous ? 'down' : 'same'
       return { wordId: key, count, trend }
@@ -79,8 +87,10 @@ export const wordsCard = (entries: CheckInEntry[], today: string) => {
 
 /** 3 · The areas that speak most (last 30 days), and any that keep coming back with a yellow/red word */
 export const zonesCard = (entries: CheckInEntry[], today: string) => {
-  const last = within(entries, today, 30).filter(isSymptom)
-  const zonesOf = (e: CheckInEntry) => e.bodyZones.filter((z) => z !== 'whole')
+  // a check-in counts once for each area it marks (left/right and front/back are different areas);
+  // "the whole body" and the strong/light check-ins are not areas
+  const zonesOf = (e: CheckInEntry) => [...new Set(e.bodyZones.filter((z) => z !== 'whole'))]
+  const last = newestFirst(within(entries, today, 30).filter(isSymptom)).filter((e) => zonesOf(e).length > 0)
   const top = topCounts(last.flatMap(zonesOf), 3).map(({ key, count }) => ({ zone: key as BodyZone, count }))
   // a yellow/red sensation in the same area on 3 different days of the last week: worth talking about
   const alertDays = new Map<BodyZone, Set<string>>()
@@ -124,7 +134,7 @@ export const trainingCard = (entries: CheckInEntry[], routine: Session[]) => {
     if (sessions.some((s) => ahead(s.end, minute) > 0 && ahead(s.end, minute) <= WINDOW)) after.push(e)
   }
   const need = 2
-  const top = topCounts(after.filter(isSymptom).map((e) => e.wordId), 1)[0]
+  const top = topCounts(newestFirst(after.filter(isSymptom)).map((e) => e.wordId), 1)[0]
   return {
     ...progress(Math.min(before.length, need) + Math.min(after.length, need), 2 * need),
     hasRoutine: routine.length > 0,

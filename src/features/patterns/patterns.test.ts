@@ -68,11 +68,27 @@ describe('my patterns', () => {
     ]
     const zones = zonesCard(entries, '2026-10-30')
     expect(zones.ready).toBe(true)
+    // equal counts: the area marked most recently first
     expect(zones.top).toEqual([
-      { zone: 'ankleRight', count: 3 },
       { zone: 'kneeLeft', count: 3 },
+      { zone: 'ankleRight', count: 3 },
     ])
     expect(zones.keepsComingBack).toEqual(['ankleRight'])
+  })
+
+  it('counts each check-in once per word and per area; whole-body check-ins are not areas', () => {
+    const entries = [
+      entry('2026-10-20', { wordId: 'tight', bodyZones: ['kneeLeft', 'kneeLeft', 'kneeLeftBack'] }),
+      entry('2026-10-21', { wordId: 'tight', bodyZones: ['whole'] }),
+      entry('2026-10-22', { wordId: 'sore', bodyZones: ['whole'] }),
+      entry('2026-10-23', { wordId: 'sore', bodyZones: ['whole'] }),
+      entry('2026-10-24', { wordId: 'achy', bodyZones: ['whole'] }),
+    ]
+    expect(wordsCard(entries, '2026-10-30').top.map((w) => [w.wordId, w.count])).toEqual([['sore', 2], ['tight', 2], ['achy', 1]])
+    const zones = zonesCard(entries, '2026-10-30')
+    // only 1 check-in marks an area: not enough yet, and the knee counts once, front and back apart
+    expect(zones).toMatchObject({ ready: false, have: 1, need: 5 })
+    expect(zones.top).toEqual([{ zone: 'kneeLeft', count: 1 }, { zone: 'kneeLeftBack', count: 1 }])
   })
 
   it('splits check-ins into before and after training from the routine', () => {
