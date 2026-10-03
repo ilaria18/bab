@@ -94,8 +94,10 @@ const run = async (request: Request): Promise<Response> => {
         }
       }
       if (delivered.length === 0) return
-      // only today's keys are kept: yesterday's can never match again
-      const sentKeys = [...(row.sent_keys ?? []).filter((key) => key.startsWith(day)), ...delivered]
+      // the last 7 days are kept (a short history to check that notifications go out); only today's
+      // keys are used to avoid sending twice
+      const weekAgo = new Date(Date.parse(`${day}T12:00:00Z`) - 7 * 86_400_000).toISOString().slice(0, 10)
+      const sentKeys = [...(row.sent_keys ?? []).filter((key) => key.slice(0, 10) >= weekAgo), ...delivered]
       const patch: Record<string, unknown> = { sent_keys: sentKeys }
       if (delivered.includes(`${day} daily`)) patch.last_sent_day = day
       await supabase(byEndpoint(row), { method: 'PATCH', body: JSON.stringify(patch) })
