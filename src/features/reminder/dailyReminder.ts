@@ -40,9 +40,9 @@ const reminderText = () => ({
 
 /** texts of the training/match notifications, in the current language */
 const slotTexts = (): Record<SlotType, { title: string; body: string }> => ({
-  pre_training: { title: 'BAB', body: i18n._(msg`Training in 3 hours: how is your body arriving? Take a minute for a check-in.`) },
+  pre_training: { title: 'BAB', body: i18n._(msg`Training in 3 hours: how is your body doing? Take a minute for a check-in.`) },
   post_training: { title: 'BAB', body: i18n._(msg`How did training go? Listen to your body and do a check-in.`) },
-  pre_match: { title: 'BAB', body: i18n._(msg`Match in 3 hours: how is your body arriving? Take a minute for a check-in.`) },
+  pre_match: { title: 'BAB', body: i18n._(msg`Match in 3 hours: how is your body doing? Take a minute for a check-in.`) },
   post_match: { title: 'BAB', body: i18n._(msg`How did the match go? Listen to your body and do a check-in.`) },
 })
 

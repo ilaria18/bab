@@ -553,16 +553,16 @@ msgid "You can change your choice at any time in Settings."
 msgstr "You can change your choice at any time in Settings."
 
 #: src/features/reminder
-msgid "Training in 3 hours: how is your body arriving? Take a minute for a check-in."
-msgstr "Training in 3 hours: how is your body arriving? Take a minute for a check-in."
+msgid "Training in 3 hours: how is your body doing? Take a minute for a check-in."
+msgstr "Training in 3 hours: how is your body doing? Take a minute for a check-in."
 
 #: src/features/reminder
 msgid "How did training go? Listen to your body and do a check-in."
 msgstr "How did training go? Listen to your body and do a check-in."
 
 #: src/features/reminder
-msgid "Match in 3 hours: how is your body arriving? Take a minute for a check-in."
-msgstr "Match in 3 hours: how is your body arriving? Take a minute for a check-in."
+msgid "Match in 3 hours: how is your body doing? Take a minute for a check-in."
+msgstr "Match in 3 hours: how is your body doing? Take a minute for a check-in."
 
 #: src/features/reminder
 msgid "How did the match go? Listen to your body and do a check-in."

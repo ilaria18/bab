@@ -1,4 +1,5 @@
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { resetPageZoom } from '@/shared/lib/pageZoom'
 import type { MessageDescriptor } from '@lingui/core'
 import { msg } from '@lingui/core/macro'
 import { Trans, useLingui } from '@lingui/react/macro'
@@ -65,6 +66,12 @@ export const CheckInFlow = ({
   useLayoutEffect(() => {
     if (contentRef.current) contentRef.current.scrollTop = 0
   }, [step])
+
+  // a pinch-zoom on the body map would otherwise carry over to the next screens
+  useEffect(() => {
+    resetPageZoom()
+  }, [step])
+  useEffect(() => resetPageZoom, [])
 
   const handleSave = async () => {
     const entry = await draft.commit()

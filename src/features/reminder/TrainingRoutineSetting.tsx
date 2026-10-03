@@ -25,12 +25,17 @@ type Editing = { index: number | null; draft: Session }
  * so it's always clear what is stored. On those days she gets a notification 3 hours before and
  * one 2 hours after each session, instead of the daily reminder. `onChange` reschedules them.
  */
+/** Monday first, then by start time */
+const inWeekOrder = (sessions: Session[]): Session[] =>
+  [...sessions].sort((a, b) => a.day - b.day || a.start.localeCompare(b.start))
+
 export const TrainingRoutineSetting = ({ onChange }: { onChange: () => void }) => {
   const { t, i18n } = useLingui()
-  const [sessions, setSessions] = useState<Session[]>(getTrainingRoutine)
+  const [sessions, setSessions] = useState<Session[]>(() => inWeekOrder(getTrainingRoutine()))
   const [editing, setEditing] = useState<Editing | null>(null)
 
-  const store = (next: Session[]) => {
+  const store = (unsorted: Session[]) => {
+    const next = inWeekOrder(unsorted)
     saveTrainingRoutine(next)
     setSessions(next)
     onChange()
