@@ -749,8 +749,8 @@ msgid "The areas that speak most"
 msgstr "The areas that speak most"
 
 #: src/features/patterns
-msgid "{comingBack}: an intense sensation came back on several days this week. Have you talked about it with your coach or physio?"
-msgstr "{comingBack}: an intense sensation came back on several days this week. Have you talked about it with your coach or physio?"
+msgid "{comingBack}: a sensation to keep an eye on came back on several days this week. Have you talked about it with your coach or physio?"
+msgstr "{comingBack}: a sensation to keep an eye on came back on several days this week. Have you talked about it with your coach or physio?"
 
 #: src/features/patterns
 msgid "After 5 check-ins you'll see the areas you mark most here."

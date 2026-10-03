@@ -231,8 +231,8 @@ export const PatternsView = () => {
             {comingBack && (
               <p className="pattern-card__alert">
                 <Trans>
-                  {comingBack}: an intense sensation came back on several days this week. Have you talked about it with
-                  your coach or physio?
+                  {comingBack}: a sensation to keep an eye on came back on several days this week. Have you talked about
+                  it with your coach or physio?
                 </Trans>
               </p>
             )}

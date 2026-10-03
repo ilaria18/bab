@@ -3,6 +3,7 @@ import type { DailyLog } from '@/entities/daily-log/types'
 import { usesPainScale } from '@/entities/check-in/vasScale'
 import { WORDS } from '@/entities/word/words'
 import type { Session } from '@/features/reminder/trainingRoutine'
+import { toDateKey } from '@/shared/lib/dateKey'
 
 /**
  * "My patterns": what the athlete's own check-ins say over time, computed on her phone only.
@@ -95,27 +96,32 @@ const minutesOf = (time: string) => {
   const [h, m] = time.split(':').map(Number)
   return h * 60 + m
 }
-const isoWeekday = (day: string) => {
-  const d = new Date(`${day}T12:00:00Z`).getUTCDay()
-  return d === 0 ? 7 : d
-}
 /** check-ins made up to 4 hours before a session starts, or up to 4 hours after it ends */
 const WINDOW = 4 * 60
+const WEEK = 7 * 1440
 
-/** 4 · Before and after training: how she arrives at sessions and how she leaves them */
+/**
+ * 4 · Before and after training: how she arrives at sessions and how she leaves them.
+ * Times are counted in minutes of the week, so a session that ends after midnight, or a check-in
+ * just after midnight following a late match, still falls in the right window. Only check-ins made
+ * live count: one logged later for an earlier day has the time it was written, not when it was felt.
+ * Each check-in counts at most once as "before" and once as "after".
+ */
 export const trainingCard = (entries: CheckInEntry[], routine: Session[]) => {
   const before: CheckInEntry[] = []
   const after: CheckInEntry[] = []
+  const sessions = routine.map((s) => {
+    const start = (s.day - 1) * 1440 + minutesOf(s.start)
+    const duration = (minutesOf(s.end) - minutesOf(s.start) + 1440) % 1440
+    return { start, end: start + duration }
+  })
   for (const e of entries) {
     const at = new Date(e.createdAt)
-    if (Number.isNaN(at.getTime())) continue
-    const minute = at.getHours() * 60 + at.getMinutes()
-    for (const session of routine.filter((s) => s.day === isoWeekday(e.date))) {
-      const start = minutesOf(session.start)
-      const end = minutesOf(session.end)
-      if (minute >= start - WINDOW && minute < start) before.push(e)
-      else if (end > start && minute > end && minute <= end + WINDOW) after.push(e)
-    }
+    if (Number.isNaN(at.getTime()) || toDateKey(at) !== e.date) continue
+    const minute = ((at.getDay() + 6) % 7) * 1440 + at.getHours() * 60 + at.getMinutes()
+    const ahead = (from: number, to: number) => (to - from + WEEK) % WEEK
+    if (sessions.some((s) => ahead(minute, s.start) > 0 && ahead(minute, s.start) <= WINDOW)) before.push(e)
+    if (sessions.some((s) => ahead(s.end, minute) > 0 && ahead(s.end, minute) <= WINDOW)) after.push(e)
   }
   const need = 2
   const top = topCounts(after.filter(isSymptom).map((e) => e.wordId), 1)[0]

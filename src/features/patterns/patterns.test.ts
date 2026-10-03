@@ -95,6 +95,29 @@ describe('my patterns', () => {
     expect(trainingCard(entries, [])).toMatchObject({ ready: false, hasRoutine: false })
   })
 
+  it('handles late sessions past midnight, ignores check-ins logged later for an earlier day', () => {
+    // Saturday match 21:00–23:30; 2026-10-31 is a Saturday
+    const routine = [{ day: 6 as const, kind: 'match' as const, start: '21:00', end: '23:30' }]
+    const entries = [
+      at('2026-11-01', '01:00', { intensity: 8 }), // Sunday 1:00, 1 h 30 after the match: after
+      at('2026-10-31', '19:00', { intensity: 2 }), // 2 h before: before
+      // written on Monday for Saturday: the time is when it was written, so it is left out
+      entry('2026-10-31', { createdAt: new Date('2026-11-02T22:00:00').toISOString(), intensity: 9 }),
+    ]
+    const card = trainingCard(entries, routine)
+    expect(card.before.checkIns).toBe(1)
+    expect(card.after).toMatchObject({ checkIns: 1, intensity: 8 })
+  })
+
+  it('counts a check-in once even with two sessions in the window', () => {
+    const routine = [
+      { day: 1 as const, kind: 'training' as const, start: '18:00', end: '19:00' },
+      { day: 1 as const, kind: 'training' as const, start: '19:30', end: '20:30' },
+    ]
+    const card = trainingCard([at('2026-10-26', '17:00')], routine)
+    expect(card.before.checkIns).toBe(1)
+  })
+
   it('compares the energy of the last 2 weeks with the 2 before and counts the good days', () => {
     const entries = [
       entry('2026-10-28', { energy: 6 }),
