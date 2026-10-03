@@ -26,6 +26,21 @@ export type VisitRow = {
   checkins: number | null
   from_reminder: boolean | null
   reminder_on: boolean | null
+  /** only in the team pilots' databases; null/absent = an older version of the app */
+  session_day?: string | null
+  patterns_views?: number | null
+  patterns_first_of_week?: boolean | null
+  patterns_first_ever?: boolean | null
+}
+
+/** period day rows (usage_days, team pilots only, off unless PERIOD_STATS=on) */
+export type PeriodDayRow = {
+  week: string
+  on_period: boolean | null
+  visits: number
+  seconds: number
+  checkins: number
+  platform: string
 }
 
 const DAY_MS = 86_400_000
@@ -128,9 +143,82 @@ const routineWeeks = (start: string, rows: RoutineWeekRow[]) =>
     }
   })
 
+/** a typical athlete-day of each group, from "days on which an athlete opened the app" */
+const perDay = (athleteDays: number, openings: number, seconds: number, checkins: number, daysWithCheckIn: number, ok: boolean) => ({
+  athleteDays: ok ? athleteDays : null,
+  openingsPerDay: ok ? round1(openings / athleteDays) : null,
+  minutesPerDay: ok ? round1(seconds / 60 / athleteDays) : null,
+  checkinsPerDay: ok ? round1(checkins / athleteDays) : null,
+  daysWithCheckInPct: ok ? pct(daysWithCheckIn, athleteDays) : null,
+})
+
+/** most athletes active in one week: below MIN_GROUP every split is hidden, whatever its size */
+const enoughAthletes = (visits: VisitRow[], start: string) => {
+  const perWeek = new Map<number, number>()
+  for (const r of visits) {
+    if (!r.first_of_week) continue
+    const w = Math.floor(daysBetween(start, r.day) / 7)
+    perWeek.set(w, (perWeek.get(w) ?? 0) + 1)
+  }
+  return Math.max(0, ...perWeek.values()) >= MIN_GROUP
+}
+
+/** Days with a match, a training or no session in the athlete's routine: how she uses the app.
+ * An athlete-day = one athlete, one day on which she opened the app. */
+const sessionDays = (visits: VisitRow[], ok: boolean) =>
+  (['match', 'training', 'none'] as const).map((kind) => {
+    const rows = visits.filter((r) => r.session_day === kind)
+    const athleteDays = rows.filter((r) => r.first_of_day).length
+    const openings = rows.filter((r) => !r.continued).length
+    const seconds = rows.reduce((sum, r) => sum + r.seconds, 0)
+    const checkins = rows.reduce((sum, r) => sum + (r.checkins ?? 0), 0)
+    // visits can't be grouped into days (no identifier), so "days with a check-in" is not known here
+    return { kind, ...perDay(athleteDays, openings, seconds, checkins, 0, ok && athleteDays >= MIN_GROUP), daysWithCheckInPct: null }
+  })
+
+/** My patterns, week by week: how many of the active athletes opened it, and how often */
+const patternsWeeks = (start: string, visits: VisitRow[]) =>
+  Array.from({ length: PILOT_WEEKS }, (_, i) => {
+    const rows = visits.filter(
+      (r) => Math.floor(daysBetween(start, r.day) / 7) === i && r.patterns_views !== null && r.patterns_views !== undefined,
+    )
+    const active = rows.filter((r) => r.first_of_week).length
+    const looked = rows.filter((r) => r.patterns_first_of_week).length
+    const views = rows.reduce((sum, r) => sum + (r.patterns_views ?? 0), 0)
+    const openings = rows.filter((r) => !r.continued)
+    const ok = active >= MIN_GROUP
+    return {
+      pilotWeek: i + 1,
+      from: addDays(start, i * 7),
+      active: shown(active),
+      lookedPct: ok ? pct(looked, active) : null,
+      viewsPerActive: perAthlete(views, active),
+      viewsPerLooker: ok && looked > 0 ? round1(views / looked) : null,
+      openingsWithPatternsPct: ok ? pct(openings.filter((r) => (r.patterns_views ?? 0) > 0).length, openings.length) : null,
+    }
+  })
+
+/** Period and app use, from the period day rows (one per athlete and day of use) */
+const periodGroups = (rows: PeriodDayRow[], ok: boolean) =>
+  ([true, false, null] as const).map((onPeriod) => {
+    const list = rows.filter((r) => r.on_period === onPeriod)
+    const sum = (key: 'visits' | 'seconds' | 'checkins') => list.reduce((total, r) => total + r[key], 0)
+    return {
+      onPeriod,
+      ...perDay(list.length, sum('visits'), sum('seconds'), sum('checkins'), list.filter((r) => r.checkins > 0).length, ok && list.length >= MIN_GROUP),
+    }
+  })
+
 export type PilotMetrics = ReturnType<typeof computeMetrics>
 
-export const computeMetrics = (start: string, allVisits: VisitRow[], platform: string | null, allRoutines: RoutineWeekRow[] = []) => {
+export const computeMetrics = (
+  start: string,
+  allVisits: VisitRow[],
+  platform: string | null,
+  allRoutines: RoutineWeekRow[] = [],
+  /** null = the period day rows are off (PERIOD_STATS) */
+  allPeriodDays: PeriodDayRow[] | null = null,
+) => {
   const end = addDays(start, PILOT_DAYS)
   const visits = allVisits.filter((r) => r.day >= start && r.day < end && (!platform || r.platform === platform))
   const pilotWeekOf = (day: string) => Math.floor(daysBetween(start, day) / 7) + 1
@@ -232,5 +320,19 @@ export const computeMetrics = (start: string, allVisits: VisitRow[], platform: s
     retention,
     lengths,
     routines: routineWeeks(start, allRoutines.filter((r) => !platform || r.platform === platform)),
+    sessionDays: sessionDays(visits, enoughAthletes(visits, start)),
+    patterns: {
+      weeks: patternsWeeks(start, visits),
+      everOpened: shown(visits.filter((r) => r.patterns_first_ever).length),
+      /** athletes counted since the app sends My patterns (their first visit of a week on the new app) */
+      tracked: visits.some((r) => r.patterns_views !== null && r.patterns_views !== undefined),
+    },
+    period: allPeriodDays === null
+      ? null
+      : (() => {
+          const weeks = new Set(Array.from({ length: PILOT_WEEKS }, (_, i) => isoWeek(addDays(start, i * 7))))
+          const rows = allPeriodDays.filter((r) => weeks.has(r.week) && (!platform || r.platform === platform))
+          return { groups: periodGroups(rows, enoughAthletes(visits, start)), athleteDays: shown(rows.length) }
+        })(),
   }
 }

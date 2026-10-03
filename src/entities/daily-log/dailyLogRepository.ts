@@ -41,6 +41,10 @@ const upsert = (date: string, patch: Partial<Omit<DailyLog, 'date'>>): DailyLog 
   return next
 }
 
+/** The answer to "period today?" for a day, read straight from the phone (yes, no, or null = not
+ * answered). Used only by the period day rows of the usage statistics, when they are on. */
+export const hadPeriodOn = (date: string): boolean | null => readAll()[date]?.hadPeriod ?? null
+
 export const createLocalStorageDailyLogRepository = (): DailyLogRepository => ({
   get: async (date) => readAll()[date] ?? null,
 

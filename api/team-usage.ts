@@ -7,14 +7,19 @@ import { toRoutineRow, type RoutineRow } from './usage-routine.js'
  * the same visit rows as api/usage.ts and the weekly routine rows as api/usage-routine.ts, sent by
  * phones that opened the team's link, stored in that team's own database (see TEAMS in
  * api/_reminders.ts). Same rules: rows rebuilt field by field, nothing about the request kept.
- * (Visit rows are checked exactly as in api/usage.ts; kept in a separate file so the two can be
- * deployed independently.)
+ * (Visit rows are checked as in api/usage.ts, plus the fields only the team pilots store: the
+ * session day and My patterns; kept in a separate file so the two can be deployed independently.)
+ *
+ * Period day rows (usage_days) are stored only with PERIOD_STATS=on in Vercel: whether a day was a
+ * period day is health data of a minor, so they stay off until the lawyer, the information notice
+ * and the parental consents allow them. While off they are accepted and thrown away.
  */
 
 const APP_ORIGINS = ['capacitor://localhost', 'https://localhost']
 const PLATFORMS = ['ios', 'android', 'web']
 const DAY = /^\d{4}-\d{2}-\d{2}$/
 const WEEK = /^\d{4}-W\d{2}$/
+const SESSION_DAYS = ['training', 'match', 'none']
 
 export type VisitRow = {
   day: string
@@ -30,7 +35,14 @@ export type VisitRow = {
   checkins: number
   from_reminder: boolean
   reminder_on: boolean
+  /** null = sent by a version of the app from before these fields */
+  session_day: string | null
+  patterns_views: number | null
+  patterns_first_of_week: boolean | null
+  patterns_first_ever: boolean | null
 }
+
+const optionalBoolean = (value: unknown) => (typeof value === 'boolean' ? value : null)
 
 /** a visit row of the current app version (v3); anything else is dropped */
 export const toVisitRow = (input: unknown): VisitRow | null => {
@@ -60,8 +72,43 @@ export const toVisitRow = (input: unknown): VisitRow | null => {
     checkins: Math.min(e.checkins as number, 50),
     from_reminder: e.from_reminder as boolean,
     reminder_on: e.reminder_on as boolean,
+    session_day: typeof e.session_day === 'string' && SESSION_DAYS.includes(e.session_day) ? e.session_day : null,
+    patterns_views: Number.isInteger(e.patterns_views) && (e.patterns_views as number) >= 0 ? Math.min(e.patterns_views as number, 50) : null,
+    patterns_first_of_week: optionalBoolean(e.patterns_first_of_week),
+    patterns_first_ever: optionalBoolean(e.patterns_first_ever),
   }
 }
+
+export type DayRow = {
+  week: string
+  on_period: boolean | null
+  visits: number
+  seconds: number
+  checkins: number
+  platform: string
+}
+
+/** a period day row (see DayRow in src/features/usage-stats/usageStats.ts); anything else is dropped */
+export const toDayRow = (input: unknown): DayRow | null => {
+  if (typeof input !== 'object' || input === null) return null
+  const e = input as Record<string, unknown>
+  if (e.v !== 3 || e.kind !== 'day') return null
+  if (typeof e.week !== 'string' || !WEEK.test(e.week)) return null
+  if (e.on_period !== null && typeof e.on_period !== 'boolean') return null
+  if (typeof e.platform !== 'string' || !PLATFORMS.includes(e.platform)) return null
+  const count = (value: unknown) => Number.isInteger(value) && (value as number) >= 0
+  if (!count(e.visits) || !count(e.seconds) || !count(e.checkins)) return null
+  return {
+    week: e.week,
+    on_period: e.on_period as boolean | null,
+    visits: Math.min(e.visits as number, 100),
+    seconds: Math.min(e.seconds as number, 24 * 60 * 60),
+    checkins: Math.min(e.checkins as number, 100),
+    platform: e.platform,
+  }
+}
+
+export const periodStatsOn = (): boolean => process.env.PERIOD_STATS === 'on'
 
 const corsHeaders = (request: Request): Record<string, string> => {
   const origin = request.headers.get('origin') ?? ''
@@ -97,8 +144,9 @@ export async function POST(request: Request): Promise<Response> {
 
   const visits = events.map(toVisitRow).filter((row): row is VisitRow => row !== null)
   const routines = events.map(toRoutineRow).filter((row): row is RoutineRow => row !== null)
+  const days = periodStatsOn() ? events.map(toDayRow).filter((row): row is DayRow => row !== null) : []
   const db = supabaseFor(team)
-  for (const [table, rows] of [['usage_visits', visits], ['usage_routines', routines]] as const) {
+  for (const [table, rows] of [['usage_visits', visits], ['usage_routines', routines], ['usage_days', days]] as const) {
     if (rows.length === 0) continue
     const response = await db(table, { method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(rows) })
     if (!response.ok) {

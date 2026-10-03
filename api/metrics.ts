@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import { timingSafeEqual } from 'node:crypto'
-import { computeMetrics, isoWeek, PILOT_DAYS, PILOT_WEEKS, type RoutineWeekRow, type VisitRow } from './_metrics.js'
+import { computeMetrics, isoWeek, PILOT_DAYS, PILOT_WEEKS, type PeriodDayRow, type RoutineWeekRow, type VisitRow } from './_metrics.js'
 import { databaseConfigured, databaseOf, dbError, teamOf, type Team } from './_reminders.js'
 
 /**
@@ -16,6 +16,8 @@ import { databaseConfigured, databaseOf, dbError, teamOf, type Team } from './_r
  *   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY   as for api/usage.ts
  *   DASHBOARD_PASSWORD                        the password Gaia types in the dashboard (long and random)
  *   PILOT_START                               optional, the pilot's first day (YYYY-MM-DD), the dashboard's default
+ *   PERIOD_STATS                              "on" = also read the period day rows (team pilots only;
+ *                                             off until the consents allow them — see api/team-usage.ts)
  */
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/
@@ -80,11 +82,19 @@ export async function GET(request: Request): Promise<Response> {
     const weeks = Array.from({ length: PILOT_WEEKS }, (_, i) =>
       isoWeek(new Date(Date.parse(`${start}T00:00:00Z`) + i * 7 * 86_400_000).toISOString().slice(0, 10)),
     )
-    const [visits, routines] = await Promise.all([
+    const periodOn = team !== null && process.env.PERIOD_STATS === 'on'
+    const [visits, routines, periodDays] = await Promise.all([
       readAll<VisitRow>('usage_visits', `select=*&day=gte.${start}&day=lt.${end}`, team),
       readAll<RoutineWeekRow>('usage_routines', `select=week,sessions,platform&week=in.(${weeks.join(',')})`, team),
+      periodOn
+        ? readAll<PeriodDayRow>('usage_days', `select=*&week=in.(${weeks.join(',')})`, team)
+        : Promise.resolve(null),
     ])
-    return json(200, { ...computeMetrics(start, visits, platform, routines), pilotStart: process.env.PILOT_START ?? null })
+    return json(200, {
+      ...computeMetrics(start, visits, platform, routines, periodDays),
+      pilotStart: process.env.PILOT_START ?? null,
+      team,
+    })
   } catch (error) {
     console.error('Could not read the pilot data', error)
     return json(502, { error: 'database' })

@@ -12,6 +12,7 @@ import { todayKey } from '@/shared/lib/dateKey'
 import { getTrainingRoutine } from '@/features/reminder/trainingRoutine'
 import { FemaleBodyFront } from '@/features/check-in-flow/steps/BodyLocationStep/FemaleBodyFront'
 import { FemaleBodyBack } from '@/features/check-in-flow/steps/BodyLocationStep/FemaleBodyBack'
+import { recordPatternsView } from '@/features/usage-stats/usageStats'
 import { cycleCard, energyCard, trainingCard, wordsCard, zonesCard, type Progress, type Trend } from './patterns'
 import './PatternsView.css'
 
@@ -95,6 +96,9 @@ export const PatternsView = () => {
   const { t } = useLingui()
   const { wordCards, bodyZoneShortLabel } = useContent()
   const [data, setData] = useState<{ entries: CheckInEntry[]; logs: DailyLog[] } | null>(null)
+
+  // anonymous usage statistics: how many times the tab was opened, never what it showed
+  useEffect(() => recordPatternsView(), [])
 
   useEffect(() => {
     let cancelled = false

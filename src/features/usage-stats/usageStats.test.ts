@@ -2,12 +2,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   recordCheckIn,
   recordOpenedFromReminder,
+  recordPatternsView,
   recordReminderActive,
   setUsageConsent,
   startUsageStats,
   routineEndpoint,
   usageEndpoint,
   usageStatsCounted,
+  sessionDayOf,
+  type DayRow,
   type RoutineRow,
   type UsageEvent,
   type UsageRow,
@@ -36,7 +39,7 @@ describe('usage stats', () => {
       send: async (_endpoint, events) => {
         rows.push(...events)
         sent = rows.filter((row): row is UsageEvent => !('kind' in row))
-        routines = rows.filter((row): row is RoutineRow => 'kind' in row)
+        routines = rows.filter((row): row is RoutineRow => 'kind' in row && row.kind === 'routine')
         return true
       },
       routine: () => routine,
@@ -89,7 +92,7 @@ describe('usage stats', () => {
     expect(new Set(sent.map((e) => e.cohort_week))).toEqual(new Set(['2026-W40']))
     expect(new Set(sent.map((e) => e.platform))).toEqual(new Set(['web']))
     sent.forEach((e) => expect(Object.keys(e).sort()).toEqual(
-      ['checkins', 'cohort_week', 'continued', 'day', 'first_ever', 'first_of_day', 'first_of_life_week', 'first_of_week', 'from_reminder', 'platform', 'reminder_on', 'seconds', 'v', 'week_since_first'],
+      ['checkins', 'cohort_week', 'continued', 'day', 'first_ever', 'first_of_day', 'first_of_life_week', 'first_of_week', 'from_reminder', 'patterns_first_ever', 'patterns_first_of_week', 'patterns_views', 'platform', 'reminder_on', 'seconds', 'session_day', 'v', 'week_since_first'],
     ))
   })
 
@@ -110,6 +113,96 @@ describe('usage stats', () => {
     // a team's phone sends everything to the team's endpoint
     expect(usageEndpoint('https://bab-analytics.vercel.app/api/usage', 'verovolley')).toBe('https://bab-analytics.vercel.app/api/team-usage?team=verovolley')
     expect(usageEndpoint('https://bab-analytics.vercel.app/api/usage', null)).toBe('https://bab-analytics.vercel.app/api/usage')
+  })
+
+  it('marks training and match days from the routine', async () => {
+    setUsageConsent(true)
+    start()
+    routine = [
+      { day: 1, kind: 'training', start: '18:00', end: '20:00' },
+      { day: 6, kind: 'match', start: '17:00', end: '19:00' },
+    ]
+    await visit('2026-09-28T10:00:00', 60) // Monday: training
+    await visit('2026-09-30T10:00:00', 60) // Wednesday: nothing
+    await visit('2026-10-03T10:00:00', 60) // Saturday: match
+    expect(sent.map((e) => e.session_day)).toEqual(['training', 'none', 'match'])
+    const both = [
+      { day: 6 as const, kind: 'training' as const, start: '09:00', end: '10:00' },
+      { day: 6 as const, kind: 'match' as const, start: '17:00', end: '19:00' },
+    ]
+    expect(sessionDayOf(new Date('2026-10-04T10:00:00'), both)).toBe('none') // Sunday
+    expect(sessionDayOf(new Date('2026-10-03T10:00:00'), both)).toBe('match')
+  })
+
+  it('counts how often My patterns is opened, never what it shows', async () => {
+    setUsageConsent(true)
+    start()
+    await visit('2026-09-28T10:00:00', 60) // no patterns
+    clock = at('2026-09-29T10:00:00')
+    setVisibility('visible')
+    recordPatternsView()
+    recordPatternsView()
+    clock += 60_000
+    setVisibility('hidden')
+    await vi.waitFor(() => expect(sent).toHaveLength(2))
+    clock = at('2026-09-30T10:00:00')
+    setVisibility('visible')
+    recordPatternsView()
+    clock += 60_000
+    setVisibility('hidden')
+    await vi.waitFor(() => expect(sent).toHaveLength(3))
+    clock = at('2026-10-05T10:00:00') // new week
+    setVisibility('visible')
+    recordPatternsView()
+    clock += 60_000
+    setVisibility('hidden')
+    await vi.waitFor(() => expect(sent).toHaveLength(4))
+    expect(sent.map((e) => [e.patterns_views, e.patterns_first_of_week, e.patterns_first_ever])).toEqual([
+      [0, false, false],
+      [2, true, true],
+      [1, false, false],
+      [1, true, false],
+    ])
+  })
+
+  it('sends no period day rows while they are off', async () => {
+    setUsageConsent(true)
+    start()
+    await visit('2026-09-28T10:00:00', 60)
+    await visit('2026-09-29T10:00:00', 60)
+    expect(rows.some((row) => 'kind' in row && row.kind === 'day')).toBe(false)
+  })
+
+  it('when switched on, sends one period row per day of use, once the day is over', async () => {
+    setUsageConsent(true)
+    stop = startUsageStats({
+      endpoint: 'https://example.test/usage',
+      counted: true,
+      now: () => clock,
+      send: async (_endpoint, events) => {
+        rows.push(...events)
+        return true
+      },
+      routine: () => [],
+      periodStats: true,
+      periodOf: (day) => (day === '2026-09-28' ? true : null),
+    })
+    const days = () => rows.filter((row): row is DayRow => 'kind' in row && row.kind === 'day')
+    await visit('2026-09-28T10:00:00', 60)
+    clock = at('2026-09-28T18:00:00')
+    setVisibility('visible')
+    recordCheckIn()
+    clock += 120_000
+    setVisibility('hidden')
+    await vi.waitFor(() => expect(JSON.parse(localStorage.getItem('bab.usage-stats.v1')!).queue).toEqual([]))
+    expect(days()).toEqual([]) // the day is not over yet
+    await visit('2026-09-29T10:00:00', 30)
+    expect(days()).toEqual([
+      { v: 3, kind: 'day', week: '2026-W40', on_period: true, visits: 2, seconds: 180, checkins: 1, platform: 'web' },
+    ])
+    await visit('2026-10-01T10:00:00', 30)
+    expect(days()[1]).toEqual({ v: 3, kind: 'day', week: '2026-W40', on_period: null, visits: 1, seconds: 30, checkins: 0, platform: 'web' })
+    expect(Object.keys(days()[0]).sort()).toEqual(['checkins', 'kind', 'on_period', 'platform', 'seconds', 'v', 'visits', 'week'])
   })
 
   it('counts a quick return as the same visit', async () => {

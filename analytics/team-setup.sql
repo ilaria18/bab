@@ -25,6 +25,28 @@ create table if not exists usage_visits (
   reminder_on         boolean                                       -- notifications on and allowed
 );
 alter table usage_visits enable row level security;
+-- Only in the team pilots (null = a visit from an older version of the app):
+alter table usage_visits add column if not exists session_day text
+  check (session_day in ('training', 'match', 'none'));                -- the routine has a match / training that day, or none
+alter table usage_visits add column if not exists patterns_views smallint
+  check (patterns_views between 0 and 50);                             -- times My patterns was opened in this visit
+alter table usage_visits add column if not exists patterns_first_of_week boolean;   -- first visit of the week with My patterns
+alter table usage_visits add column if not exists patterns_first_ever boolean;      -- first visit ever with My patterns
+
+-- Period and app use: one row per phone and day of use, with only the ISO week (not the day), the
+-- athlete's own answer to "period today?" (true / false / null = not answered) and how much she used
+-- the app that day. No identifier; not linked to the visits. Health data of a minor: the app sends
+-- these rows only with VITE_PERIOD_STATS=on and the server keeps them only with PERIOD_STATS=on —
+-- both off until the lawyer, the information notice and the parental consents allow it.
+create table if not exists usage_days (
+  week       text     not null,                     -- ISO week, e.g. 2026-W41
+  on_period  boolean,
+  visits     smallint not null check (visits between 0 and 100),
+  seconds    integer  not null check (seconds between 0 and 86400),
+  checkins   smallint not null check (checkins between 0 and 100),
+  platform   text     not null check (platform in ('ios', 'android', 'web'))
+);
+alter table usage_days enable row level security;
 
 -- One row per phone and week, sent with the first visit of the week (same consent as the visits):
 -- the training/match routine entered in Settings. No identifier; not linked to the visits.
@@ -86,4 +108,6 @@ alter table feedback enable row level security;
 notify pgrst, 'reload schema';
 
 
-notify pgrst, 'reload schema';
+-- ═════════════════════════════════════════════════════════════════════════════════════════════
+-- Before the pilot starts: remove the test data (run it on its own, only when needed)
+--   delete from usage_visits; delete from usage_routines; delete from usage_days; delete from feedback;

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { POST, toVisitRow } from './team-usage'
+import { POST, toDayRow, toVisitRow } from './team-usage'
 import { POST as feedbackPost } from './feedback'
 
 const visit = {
@@ -30,7 +30,36 @@ describe('team pilots', () => {
     const response = await POST(new Request('https://app.test/api/team-usage?team=verovolley', { method: 'POST', body: JSON.stringify([visit, routine, { v: 3, kind: 'week' }]) }))
     expect(response.status).toBe(204)
     expect(calls.map((c) => c.url)).toEqual(['https://vero.test/rest/v1/usage_visits', 'https://vero.test/rest/v1/usage_routines'])
-    expect(calls[0].body).toEqual([{ ...Object.fromEntries(Object.entries(visit).filter(([k]) => k !== 'v')) }])
+    // a row from an older app: the new fields are stored as null
+    expect(calls[0].body).toEqual([{
+      ...Object.fromEntries(Object.entries(visit).filter(([k]) => k !== 'v')),
+      session_day: null, patterns_views: null, patterns_first_of_week: null, patterns_first_ever: null,
+    }])
+  })
+
+  it('stores the session day and My patterns of the new app', () => {
+    const row = toVisitRow({ ...visit, session_day: 'match', patterns_views: 3, patterns_first_of_week: true, patterns_first_ever: false })
+    expect(row).toMatchObject({ session_day: 'match', patterns_views: 3, patterns_first_of_week: true, patterns_first_ever: false })
+    expect(toVisitRow({ ...visit, session_day: 'gym', patterns_views: -1 })).toMatchObject({ session_day: null, patterns_views: null })
+  })
+
+  const day = { v: 3, kind: 'day', week: '2026-W41', on_period: true, visits: 2, seconds: 180, checkins: 1, platform: 'ios' }
+
+  it('throws the period day rows away while PERIOD_STATS is off', async () => {
+    const response = await POST(new Request('https://app.test/api/team-usage?team=verovolley', { method: 'POST', body: JSON.stringify([day]) }))
+    expect(response.status).toBe(204)
+    expect(calls).toEqual([])
+  })
+
+  it('stores the period day rows with PERIOD_STATS=on, with only the week', async () => {
+    vi.stubEnv('PERIOD_STATS', 'on')
+    await POST(new Request('https://app.test/api/team-usage?team=verovolley', { method: 'POST', body: JSON.stringify([visit, day, { ...day, day: '2026-10-05', on_period: null }]) }))
+    expect(calls.map((c) => c.url)).toEqual(['https://vero.test/rest/v1/usage_visits', 'https://vero.test/rest/v1/usage_days'])
+    expect(calls[1].body).toEqual([
+      { week: '2026-W41', on_period: true, visits: 2, seconds: 180, checkins: 1, platform: 'ios' },
+      { week: '2026-W41', on_period: null, visits: 2, seconds: 180, checkins: 1, platform: 'ios' },
+    ])
+    expect(toDayRow({ ...day, on_period: 'yes' })).toBeNull()
   })
 
   it('refuses an unknown or missing team, and waits (5xx) while the team database is not set up', async () => {

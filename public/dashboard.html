@@ -201,6 +201,24 @@
           <div class="scroll" id="table-weeks"></div>
         </article>
 
+        <article class="card wide" data-team-only hidden>
+          <h2>Training days vs other days</h2>
+          <p class="sub">How the app is used on days with a match, a training or no session in the athlete's own weekly routine. One “athlete-day” = one athlete on one day she opened the app. Hidden under 5 athlete-days.</p>
+          <div class="scroll" id="table-session-days"></div>
+        </article>
+
+        <article class="card wide" data-team-only hidden>
+          <h2>My patterns tab</h2>
+          <p class="sub" id="patterns-sub">Among the athletes who opened the app that week: how many looked at My patterns, and how often. Only how many times it was opened, never what it showed.</p>
+          <div class="scroll" id="table-patterns"></div>
+        </article>
+
+        <article class="card wide" data-team-only hidden>
+          <h2>Period and app use</h2>
+          <p class="sub" id="period-sub"></p>
+          <div class="scroll" id="table-period"></div>
+        </article>
+
         <article class="card wide">
           <h2>Training routines</h2>
           <p class="sub">The weekly training and match plan the athletes entered in the app, sent once a week without a name and not linked to the visits. Medians among athletes with a routine; hidden under 5 phones.</p>
@@ -525,6 +543,7 @@
         fmt(w.daysUsedPerUser), fmt(w.checkins), fmt(w.checkinsPerUser), fmt(w.openingsFromReminderPct, '%'),
         fmt(w.reminderOnPct, '%'), fmt(w.minutesPerOpening), fmt(w.minutesPerUser),
       ]))
+    renderPilotQuestions()
     const routines = data.routines ?? []
     table($('table-routines'),
       ['Week', 'Phones reporting', 'With a routine', 'Sessions / week', 'Training min / week', 'Match min / week', 'Matches / week'],
@@ -543,6 +562,40 @@
         fmt(d.openingsFromReminder), fmt(d.minutesPerOpening),
       ]))
     $('last-update').textContent = s.lastDataDay ? `Last data received: ${dateIt(s.lastDataDay, { day: 'numeric', month: 'long' })}.` : 'No data received for this period.'
+  }
+
+  // ── the pilot's questions (team pilots only: the main database does not keep these fields) ──
+  const SESSION_DAY = { match: 'Match day', training: 'Training day', none: 'No session' }
+  const renderPilotQuestions = () => {
+    const team = Boolean(data.team)
+    document.querySelectorAll('[data-team-only]').forEach((card) => { card.hidden = !team })
+    if (!team) return
+    table($('table-session-days'),
+      ['Day', 'Athlete-days', 'Openings / day', 'Min / day', 'Check-ins / day'],
+      (data.sessionDays ?? []).map((g) => [
+        SESSION_DAY[g.kind] ?? g.kind, fmt(g.athleteDays), fmt(g.openingsPerDay), fmt(g.minutesPerDay), fmt(g.checkinsPerDay),
+      ]))
+    const p = data.patterns ?? { weeks: [], everOpened: null, tracked: false }
+    $('patterns-sub').textContent =
+      'Among the athletes who opened the app that week: how many looked at My patterns, and how often. Only how many times it was opened, never what it showed.' +
+      (p.everOpened !== null ? ` Athletes who opened it at least once: ${p.everOpened}.` : '')
+    table($('table-patterns'),
+      ['Week', 'Active athletes', 'Looked at My patterns', 'Views / active athlete', 'Views / athlete who looked', 'Openings with My patterns'],
+      p.weeks.map((w) => [
+        `${w.pilotWeek} (${dateIt(w.from)})`, fmt(w.active), fmt(w.lookedPct, '%'), fmt(w.viewsPerActive), fmt(w.viewsPerLooker), fmt(w.openingsWithPatternsPct, '%'),
+      ]))
+    if (!data.period) {
+      $('period-sub').textContent = 'Off. Whether a day was a period day is health data of a minor: these rows are switched on (VITE_PERIOD_STATS and PERIOD_STATS = on in Vercel) only once the lawyer, the information notice and the parental consents allow it.'
+      $('table-period').replaceChildren()
+      return
+    }
+    $('period-sub').textContent = 'Days on which an athlete opened the app, grouped by her own answer to “period today?”. One row per athlete and day, sent the following day, with only the week and no name. Hidden under 5 athlete-days.'
+    const PERIOD = (v) => (v === true ? 'Period day' : v === false ? 'Not a period day' : 'Not answered')
+    table($('table-period'),
+      ['Day', 'Athlete-days', 'Openings / day', 'Min / day', 'Check-ins / day', 'Days with a check-in'],
+      data.period.groups.map((g) => [
+        PERIOD(g.onPeriod), fmt(g.athleteDays), fmt(g.openingsPerDay), fmt(g.minutesPerDay), fmt(g.checkinsPerDay), fmt(g.daysWithCheckInPct, '%'),
+      ]))
   }
 
   // ── feedback ──────────────────────────────────────────────────────────────────────────

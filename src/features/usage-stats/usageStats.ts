@@ -5,6 +5,7 @@ import { toDateKey } from '@/shared/lib/dateKey'
 import { safeStorage } from '@/shared/lib/safeStorage'
 import { getTrainingRoutine, type Session } from '@/features/reminder/trainingRoutine'
 import { currentTeam, type Team } from '@/shared/lib/team'
+import { hadPeriodOn } from '@/entities/daily-log/dailyLogRepository'
 
 /**
  * Anonymous usage statistics.
@@ -17,7 +18,8 @@ import { currentTeam, type Team } from '@/shared/lib/team'
  * the same person.
  *
  * What the athlete records (words, body zones, intensity, notes) is never read here — only how
- * many check-ins were completed during a visit.
+ * many check-ins were completed during a visit, and how many times My patterns was opened.
+ * The one exception is the period day rows (DayRow), off unless VITE_PERIOD_STATS=on.
  * Nothing is collected or sent until setUsageConsent(true) has been called.
  *
  * Only the app counts: the native app, or the website opened from its icon on a phone's home
@@ -50,7 +52,17 @@ export type UsageEvent = {
   from_reminder: boolean
   /** the daily reminder is switched on and the phone allows notifications */
   reminder_on: boolean
+  /** the day has a match or a training in the athlete's weekly routine (Settings), or none */
+  session_day: SessionDay
+  /** times the My patterns tab was opened during this visit */
+  patterns_views: number
+  /** the first visit of this ISO week in which My patterns was opened */
+  patterns_first_of_week: boolean
+  /** the first visit ever in which My patterns was opened */
+  patterns_first_ever: boolean
 }
+
+export type SessionDay = 'training' | 'match' | 'none'
 
 /**
  * Once a week (with the first visit of the week) the phone also sends the training/match routine
@@ -66,8 +78,30 @@ export type RoutineRow = {
   platform: AppPlatform
 }
 
-/** what goes to the server: visit rows, and the weekly routine row */
-export type UsageRow = UsageEvent | RoutineRow
+/**
+ * Period and app use — OFF unless VITE_PERIOD_STATS=on, and only on a team's phones. Whether a day
+ * was a period day is health data of a minor: switch it on only once the lawyer, the information
+ * notice and the parental consents allow it (and PERIOD_STATS=on on the server, which otherwise
+ * throws these rows away).
+ *
+ * One row per phone and day of use, sent once the day is over (with the first visit of a later
+ * day): only the ISO week (not the day), the athlete's own answer to "period today?" (yes / no /
+ * not answered), and how much she used the app that day. No identifier, not linked to the visits.
+ */
+export type DayRow = {
+  v: 3
+  kind: 'day'
+  week: string
+  on_period: boolean | null
+  /** openings that day (quick returns are not new openings) */
+  visits: number
+  seconds: number
+  checkins: number
+  platform: AppPlatform
+}
+
+/** what goes to the server: visit rows, the weekly routine row and (if on) the period day rows */
+export type UsageRow = UsageEvent | RoutineRow | DayRow
 
 /**
  * Where the rows go: VITE_USAGE_ENDPOINT (…/api/usage), or for a phone tagged with a team's pilot
@@ -87,6 +121,11 @@ type State = {
   lastWeek: string | null
   lastLifeWeek: number | null
   lastHiddenAt: number | null
+  /** ISO week of the last visit with My patterns opened, and whether it was ever opened */
+  patternsWeek: string | null
+  patternsSeen: boolean
+  /** the day being added up for its period day row (only while those rows are on) */
+  today: { day: string; visits: number; seconds: number; checkins: number } | null
   queue: UsageRow[]
 }
 
@@ -106,6 +145,9 @@ const emptyState = (): State => ({
   lastWeek: null,
   lastLifeWeek: null,
   lastHiddenAt: null,
+  patternsWeek: null,
+  patternsSeen: false,
+  today: null,
   queue: [],
 })
 
@@ -139,6 +181,7 @@ export const usageStatsCounted = (
 // What happens during the current visit, reported when it ends.
 let visitCheckins = 0
 let visitFromReminder = false
+let visitPatternsViews = 0
 /** a reminder tap can arrive just before the app reports it is in the foreground */
 let pendingFromReminder = false
 let reminderOn = false
@@ -146,6 +189,11 @@ let reminderOn = false
 /** Call when a new check-in has been saved. */
 export const recordCheckIn = (): void => {
   visitCheckins += 1
+}
+
+/** Call when the My patterns tab is shown. */
+export const recordPatternsView = (): void => {
+  visitPatternsViews += 1
 }
 
 /** Call when the app was opened by tapping the daily reminder. */
@@ -180,9 +228,21 @@ type Options = {
   doc?: Document
   /** the training routine to report once a week (Settings → Training and matches) */
   routine?: () => Session[]
+  /** send the period day rows (see DayRow): off unless VITE_PERIOD_STATS=on on a team's phone */
+  periodStats?: boolean
+  /** the athlete's answer to "period today?" for a day: yes, no, or null = not answered */
+  periodOf?: (day: string) => boolean | null
 }
 
 const isRoutineRow = (row: UsageRow): row is RoutineRow => 'kind' in row && row.kind === 'routine'
+const isDayRow = (row: UsageRow): row is DayRow => 'kind' in row && row.kind === 'day'
+
+/** whether a day has a match, a training or no session in the weekly routine */
+export const sessionDayOf = (date: Date, sessions: Session[]): SessionDay => {
+  const weekday = date.getDay() || 7
+  const that = sessions.filter((s) => s.day === weekday)
+  return that.some((s) => s.kind === 'match') ? 'match' : that.length > 0 ? 'training' : 'none'
+}
 
 const post = async (endpoint: string, events: UsageRow[]): Promise<boolean> => {
   if (events.length === 0) return true
@@ -207,7 +267,8 @@ const defaultSend = async (endpoint: string, events: UsageRow[]): Promise<boolea
   // a team's endpoint takes visits and routines together
   if (endpoint.includes('/api/team-usage')) return post(endpoint, events)
   const routines = events.filter(isRoutineRow)
-  const visits = events.filter((row) => !isRoutineRow(row))
+  // period day rows exist only for a team's endpoint
+  const visits = events.filter((row) => !('kind' in row))
   const routineUrl = routineEndpoint(endpoint)
   const [visitsOk, routinesOk] = await Promise.all([
     post(endpoint, visits),
@@ -226,6 +287,8 @@ export const startUsageStats = ({
   send = defaultSend,
   doc = document,
   routine = getTrainingRoutine,
+  periodStats = import.meta.env.VITE_PERIOD_STATS === 'on' && currentTeam() !== null,
+  periodOf = hadPeriodOn,
 }: Options = {}): (() => void) => {
   if (!endpoint || !counted) return () => {}
 
@@ -253,8 +316,10 @@ export const startUsageStats = ({
     visibleSince = null
     const checkins = visitCheckins
     const fromReminder = visitFromReminder
+    const patternsViews = visitPatternsViews
     visitCheckins = 0
     visitFromReminder = false
+    visitPatternsViews = 0
     pendingFromReminder = false
     const state = loadState()
     if (!state.consent) return
@@ -281,6 +346,37 @@ export const startUsageStats = ({
       checkins,
       from_reminder: fromReminder,
       reminder_on: reminderOn,
+      session_day: sessionDayOf(date, routine()),
+      patterns_views: patternsViews,
+      patterns_first_of_week: patternsViews > 0 && state.patternsWeek !== week,
+      patterns_first_ever: patternsViews > 0 && !state.patternsSeen,
+    }
+
+    // the period day row of an earlier day is ready once a new day starts; the answer to "period
+    // today?" is read only then, when she can no longer change it from that day's check-ins
+    const dayRows: DayRow[] = []
+    let today = periodStats ? state.today : null
+    if (today && today.day !== day) {
+      dayRows.push({
+        v: 3,
+        kind: 'day',
+        week: isoWeekKey(parseISO(today.day)),
+        on_period: periodOf(today.day),
+        visits: today.visits,
+        seconds: today.seconds,
+        checkins: today.checkins,
+        platform,
+      })
+      today = null
+    }
+    if (periodStats) {
+      const sum = today ?? { day, visits: 0, seconds: 0, checkins: 0 }
+      today = {
+        day,
+        visits: sum.visits + (continued ? 0 : 1),
+        seconds: sum.seconds + event.seconds,
+        checkins: sum.checkins + checkins,
+      }
     }
 
     saveState({
@@ -290,9 +386,13 @@ export const startUsageStats = ({
       lastWeek: week,
       lastLifeWeek: lifeWeek,
       lastHiddenAt: endedAt,
+      patternsWeek: patternsViews > 0 ? week : state.patternsWeek,
+      patternsSeen: state.patternsSeen || patternsViews > 0,
+      today,
       queue: [
         // weekly summaries sent by older versions are dropped
-        ...state.queue.filter((row) => !('kind' in row) || isRoutineRow(row)),
+        ...state.queue.filter((row) => !('kind' in row) || isRoutineRow(row) || isDayRow(row)),
+        ...dayRows,
         // the first visit of a week also reports the routine as it stands
         ...(event.first_of_week ? [{ v: 3 as const, kind: 'routine' as const, week, sessions: routine(), platform }] : []),
         event,
@@ -308,6 +408,7 @@ export const startUsageStats = ({
     continued = lastHiddenAt !== null && startedAt - lastHiddenAt < RESUME_WINDOW_MS
     visibleSince = startedAt
     visitCheckins = 0
+    visitPatternsViews = 0
     visitFromReminder = pendingFromReminder
     void flush() // rows that could not be sent last time (offline)
   }
