@@ -1,10 +1,10 @@
--- Database of a team with its own pilot (e.g. VeroVolley): a SEPARATE Supabase project (EU region).
+-- Database of a team with its own pilot (e.g. Volley Bergamo): a SEPARATE Supabase project (EU region).
 -- Supabase → SQL Editor of THAT project → paste this whole file → Run. Safe to run again.
 -- Same tables as analytics/setup.sql except the notifications: those stay in the main project,
 -- which sends every reminder. Then in Vercel set, for the team (name in capitals):
---   VEROVOLLEY_SUPABASE_URL                 https://<project>.supabase.co
---   VEROVOLLEY_SUPABASE_SERVICE_ROLE_KEY    the project's secret key
--- The team's athletes use the link https://bab-analytics.vercel.app/verovolley
+--   VOLLEYBERGAMO_SUPABASE_URL                 https://<project>.supabase.co
+--   VOLLEYBERGAMO_SUPABASE_SERVICE_ROLE_KEY    the project's secret key
+-- The team's athletes use the link https://bab-analytics.vercel.app/volleybergamo
 
 -- ── 1. Usage statistics ──────────────────────────────────────────────────────────────────────
 -- One row per visit of the installed app. No id: the yes/no flags are counted on the server to

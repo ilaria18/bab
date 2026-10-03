@@ -1,8 +1,8 @@
 {
-  "name": "Body Language for Athletes · VeroVolley",
+  "name": "Body Language for Athletes · Volley Bergamo",
   "short_name": "BAB",
   "description": "Body Language for Athletes",
-  "start_url": "/?team=verovolley",
+  "start_url": "/?team=volleybergamo",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
@@ -28,5 +28,5 @@
       "purpose": "maskable"
     }
   ],
-  "id": "/?team=verovolley"
+  "id": "/?team=volleybergamo"
 }

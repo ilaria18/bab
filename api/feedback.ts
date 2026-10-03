@@ -6,7 +6,7 @@ import { databaseConfigured, dbError, json, supabaseFor, teamOf } from './_remin
  * Anonymous feedback from the athletes (the app's "Feedback" tab).
  *
  * POST { kind, message, screen }                  stores one message (anyone with the app)
- * ?team=verovolley (both methods): that team's own database instead of the main one
+ * ?team=volleybergamo (both methods): that team's own database instead of the main one
  * GET  ?start=YYYY-MM-DD  + Authorization: Bearer <DASHBOARD_PASSWORD>
  *                                                  the messages for the dashboard, newest first
  *

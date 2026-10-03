@@ -14,8 +14,8 @@ describe('team pilots', () => {
     calls.length = 0
     vi.stubEnv('SUPABASE_URL', 'https://main.test')
     vi.stubEnv('SUPABASE_SERVICE_ROLE_KEY', 'sb_secret_main')
-    vi.stubEnv('VEROVOLLEY_SUPABASE_URL', 'https://vero.test')
-    vi.stubEnv('VEROVOLLEY_SUPABASE_SERVICE_ROLE_KEY', 'sb_secret_vero')
+    vi.stubEnv('VOLLEYBERGAMO_SUPABASE_URL', 'https://bergamo.test')
+    vi.stubEnv('VOLLEYBERGAMO_SUPABASE_SERVICE_ROLE_KEY', 'sb_secret_bergamo')
     vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
       calls.push({ url, body: init?.body ? JSON.parse(String(init.body)) : null })
       return new Response(null, { status: 201 })
@@ -27,9 +27,9 @@ describe('team pilots', () => {
   })
 
   it('stores a team phone\'s visits and routines in the team\'s own database', async () => {
-    const response = await POST(new Request('https://app.test/api/team-usage?team=verovolley', { method: 'POST', body: JSON.stringify([visit, routine, { v: 3, kind: 'week' }]) }))
+    const response = await POST(new Request('https://app.test/api/team-usage?team=volleybergamo', { method: 'POST', body: JSON.stringify([visit, routine, { v: 3, kind: 'week' }]) }))
     expect(response.status).toBe(204)
-    expect(calls.map((c) => c.url)).toEqual(['https://vero.test/rest/v1/usage_visits', 'https://vero.test/rest/v1/usage_routines'])
+    expect(calls.map((c) => c.url)).toEqual(['https://bergamo.test/rest/v1/usage_visits', 'https://bergamo.test/rest/v1/usage_routines'])
     // a row from an older app: the new fields are stored as null
     expect(calls[0].body).toEqual([{
       ...Object.fromEntries(Object.entries(visit).filter(([k]) => k !== 'v')),
@@ -46,15 +46,15 @@ describe('team pilots', () => {
   const day = { v: 3, kind: 'day', week: '2026-W41', on_period: true, visits: 2, seconds: 180, checkins: 1, platform: 'ios' }
 
   it('throws the period day rows away while PERIOD_STATS is off', async () => {
-    const response = await POST(new Request('https://app.test/api/team-usage?team=verovolley', { method: 'POST', body: JSON.stringify([day]) }))
+    const response = await POST(new Request('https://app.test/api/team-usage?team=volleybergamo', { method: 'POST', body: JSON.stringify([day]) }))
     expect(response.status).toBe(204)
     expect(calls).toEqual([])
   })
 
   it('stores the period day rows with PERIOD_STATS=on, with only the week', async () => {
     vi.stubEnv('PERIOD_STATS', 'on')
-    await POST(new Request('https://app.test/api/team-usage?team=verovolley', { method: 'POST', body: JSON.stringify([visit, day, { ...day, day: '2026-10-05', on_period: null }]) }))
-    expect(calls.map((c) => c.url)).toEqual(['https://vero.test/rest/v1/usage_visits', 'https://vero.test/rest/v1/usage_days'])
+    await POST(new Request('https://app.test/api/team-usage?team=volleybergamo', { method: 'POST', body: JSON.stringify([visit, day, { ...day, day: '2026-10-05', on_period: null }]) }))
+    expect(calls.map((c) => c.url)).toEqual(['https://bergamo.test/rest/v1/usage_visits', 'https://bergamo.test/rest/v1/usage_days'])
     expect(calls[1].body).toEqual([
       { week: '2026-W41', on_period: true, visits: 2, seconds: 180, checkins: 1, platform: 'ios' },
       { week: '2026-W41', on_period: null, visits: 2, seconds: 180, checkins: 1, platform: 'ios' },
@@ -66,16 +66,16 @@ describe('team pilots', () => {
     const post = (url: string) => POST(new Request(url, { method: 'POST', body: JSON.stringify([visit]) }))
     expect((await post('https://app.test/api/team-usage')).status).toBe(400)
     expect((await post('https://app.test/api/team-usage?team=other')).status).toBe(400)
-    vi.stubEnv('VEROVOLLEY_SUPABASE_URL', '')
-    expect((await post('https://app.test/api/team-usage?team=verovolley')).status).toBe(503)
+    vi.stubEnv('VOLLEYBERGAMO_SUPABASE_URL', '')
+    expect((await post('https://app.test/api/team-usage?team=volleybergamo')).status).toBe(503)
     expect(calls).toEqual([])
   })
 
   it('sends a team phone\'s feedback to the team database, everyone else\'s to the main one', async () => {
     const send = (url: string) => feedbackPost(new Request(url, { method: 'POST', body: JSON.stringify({ kind: 'idea', message: 'ok' }) }))
-    await send('https://app.test/api/feedback?team=verovolley')
+    await send('https://app.test/api/feedback?team=volleybergamo')
     await send('https://app.test/api/feedback')
-    expect(calls.map((c) => c.url)).toEqual(['https://vero.test/rest/v1/feedback', 'https://main.test/rest/v1/feedback'])
+    expect(calls.map((c) => c.url)).toEqual(['https://bergamo.test/rest/v1/feedback', 'https://main.test/rest/v1/feedback'])
   })
 
   it('checks visit rows like the main endpoint', () => {

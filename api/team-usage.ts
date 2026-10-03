@@ -3,7 +3,7 @@ import { databaseConfigured, dbError, supabaseFor, teamOf } from './_reminders.j
 import { toRoutineRow, type RoutineRow } from './usage-routine.js'
 
 /**
- * The anonymous usage statistics of a team with its own pilot (POST /api/team-usage?team=verovolley):
+ * The anonymous usage statistics of a team with its own pilot (POST /api/team-usage?team=volleybergamo):
  * the same visit rows as api/usage.ts and the weekly routine rows as api/usage-routine.ts, sent by
  * phones that opened the team's link, stored in that team's own database (see TEAMS in
  * api/_reminders.ts). Same rules: rows rebuilt field by field, nothing about the request kept.

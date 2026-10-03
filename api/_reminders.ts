@@ -109,11 +109,11 @@ export const dueReminders = (row: ReminderRow, now: Date): { day: string; due: D
 
 
 /**
- * Teams with a pilot of their own: their app link (e.g. /verovolley) tags the phone, and their data
+ * Teams with a pilot of their own: their app link (e.g. /volleybergamo) tags the phone, and their data
  * goes to a separate Supabase project, set with <TEAM>_SUPABASE_URL and
- * <TEAM>_SUPABASE_SERVICE_ROLE_KEY (e.g. VEROVOLLEY_SUPABASE_URL). Everyone else uses SUPABASE_URL.
+ * <TEAM>_SUPABASE_SERVICE_ROLE_KEY (e.g. VOLLEYBERGAMO_SUPABASE_URL). Everyone else uses SUPABASE_URL.
  */
-export const TEAMS = ['verovolley'] as const
+export const TEAMS = ['volleybergamo'] as const
 export type Team = (typeof TEAMS)[number]
 
 /** the `team` of a request (?team=…): null without one, 'invalid' for an unknown team */

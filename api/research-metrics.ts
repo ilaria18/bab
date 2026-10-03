@@ -7,7 +7,7 @@ import { computeResearchMetrics, type ParticipantRow, type ResearchCheckinRow } 
  * First analyses of the check-ins athletes sent, for the dashboard's "Check-ins" tab.
  *
  * GET /api/research-metrics?start=YYYY-MM-DD   (optional: only the 35 pilot days from start)
- *     &team=verovolley                           (optional: that team's own database)
+ *     &team=volleybergamo                           (optional: that team's own database)
  * Header: Authorization: Bearer <DASHBOARD_PASSWORD>
  *
  * Reads research_checkins and the routines in research_participants with the server's secret key

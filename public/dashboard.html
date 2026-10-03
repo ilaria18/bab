@@ -169,8 +169,8 @@
     <div class="tabs" role="tablist">
       <button type="button" role="tab" id="tab-usage" aria-selected="true" aria-controls="content">App use</button>
       <button type="button" role="tab" id="tab-research" aria-selected="false" aria-controls="research">Check-ins</button>
-      <button type="button" role="tab" id="tab-team-usage" aria-selected="false" aria-controls="content">VeroVolley · App use</button>
-      <button type="button" role="tab" id="tab-team-research" aria-selected="false" aria-controls="research">VeroVolley · Check-ins</button>
+      <button type="button" role="tab" id="tab-team-usage" aria-selected="false" aria-controls="content">Volley Bergamo · App use</button>
+      <button type="button" role="tab" id="tab-team-research" aria-selected="false" aria-controls="research">Volley Bergamo · Check-ins</button>
     </div>
 
     <div id="content" role="tabpanel" aria-labelledby="tab-usage">
@@ -631,7 +631,7 @@
   // ── check-ins tab ─────────────────────────────────────────────────────────────────────
   let research = null
   let tab = 'usage'
-  /** '' = everyone else (main database); 'verovolley' = the team's own pilot database */
+  /** '' = everyone else (main database); 'volleybergamo' = the team's own pilot database */
   let team = ''
 
   const emptyChart = (container, text) => container.replaceChildren(el('div', { class: 'empty' }, text))
@@ -833,7 +833,7 @@
     }
   }
 
-  const TABS = { usage: ['usage', ''], research: ['research', ''], 'team-usage': ['usage', 'verovolley'], 'team-research': ['research', 'verovolley'] }
+  const TABS = { usage: ['usage', ''], research: ['research', ''], 'team-usage': ['usage', 'volleybergamo'], 'team-research': ['research', 'volleybergamo'] }
   const showTab = (name) => {
     const [view, nextTeam] = TABS[name]
     for (const id of Object.keys(TABS)) $(`tab-${id}`).setAttribute('aria-selected', String(id === name))

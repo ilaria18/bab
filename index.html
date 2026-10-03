@@ -7,12 +7,12 @@
     <meta name="theme-color" content="#004b4e" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <script>
-      // A team's own link (/verovolley, or ?team=verovolley in the installed app's start address) tags
+      // A team's own link (/volleybergamo, or ?team=volleybergamo in the installed app's start address) tags
       // this phone for that team's pilot (src/shared/lib/team.ts); the team's manifest makes "Add to
       // Home Screen" keep the tag. Runs before the app so everything after it knows the team.
       ;(function () {
         try {
-          var teams = ['verovolley']
+          var teams = ['volleybergamo']
           var fromPath = (location.pathname.match(/^\/([a-z]+)\/?$/i) || [])[1]
           var fromQuery = new URLSearchParams(location.search).get('team')
           var team = [fromPath && fromPath.toLowerCase(), fromQuery].filter(function (t) { return teams.indexOf(t) >= 0 })[0]
