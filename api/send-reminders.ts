@@ -72,7 +72,10 @@ const run = async (request: Request): Promise<Response> => {
       const delivered: string[] = []
       for (const reminder of due) {
         try {
-          const status = await sendPush(row, { title: reminder.title, body: reminder.body }, keys)
+          // the kind (daily, pre_training, post_match…) lets the phone keep the before and after
+          // notifications apart instead of the second silently replacing the first
+          const kind = reminder.key.split(' ').pop()
+          const status = await sendPush(row, { title: reminder.title, body: reminder.body, kind }, keys)
           if (status === 404 || status === 410) {
             removed += 1
             await supabase(byEndpoint(row), { method: 'DELETE' })

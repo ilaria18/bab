@@ -127,7 +127,11 @@ self.addEventListener('push', (event) => {
       body: message.body || '',
       icon: '/icon-192.png',
       badge: '/icon-192.png', // small icon in Android's status bar (as it was before the white logo)
-      tag: 'bab-daily-reminder', // a new reminder replaces yesterday's instead of piling up
+      // one notification per kind (daily, pre_training, post_training, pre_match, post_match): a new one
+      // replaces only the same kind from an earlier day, never the other notification of the same day
+      tag: `bab-${/^[a-z_]{1,20}$/.test(message.kind || '') ? message.kind : 'daily'}`,
+      // and it still rings when it replaces an old one
+      renotify: true,
     })),
   )
 })

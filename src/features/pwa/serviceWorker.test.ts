@@ -228,7 +228,19 @@ describe('service worker', () => {
 
       await dispatch('push', { data: { json: () => ({ title: 'BAB', body: 'Com’è andata oggi?' }) } }).settled()
 
-      expect(showNotification).toHaveBeenCalledWith('BAB', expect.objectContaining({ body: 'Com’è andata oggi?', tag: 'bab-daily-reminder' }))
+      expect(showNotification).toHaveBeenCalledWith('BAB', expect.objectContaining({ body: 'Com’è andata oggi?', tag: 'bab-daily', renotify: true }))
+    })
+
+    it('keeps the after-training notification apart from the before one', async () => {
+      const { dispatch, scope } = loadWorker()
+      const showNotification = vi.fn(async () => {})
+      Object.assign(scope, { registration: { showNotification } })
+
+      await dispatch('push', { data: { json: () => ({ title: 'BAB', body: 'Before', kind: 'pre_training' }) } }).settled()
+      await dispatch('push', { data: { json: () => ({ title: 'BAB', body: 'After', kind: 'post_training' }) } }).settled()
+
+      expect(showNotification).toHaveBeenNthCalledWith(1, 'BAB', expect.objectContaining({ tag: 'bab-pre_training' }))
+      expect(showNotification).toHaveBeenNthCalledWith(2, 'BAB', expect.objectContaining({ tag: 'bab-post_training' }))
     })
 
     it('opens the app marked as opened from the reminder, or tells the open app', async () => {
