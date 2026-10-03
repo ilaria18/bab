@@ -108,6 +108,46 @@ export const dueReminders = (row: ReminderRow, now: Date): { day: string; due: D
 }
 
 
+/**
+ * Teams with a pilot of their own: their app link (e.g. /verovolley) tags the phone, and their data
+ * goes to a separate Supabase project, set with <TEAM>_SUPABASE_URL and
+ * <TEAM>_SUPABASE_SERVICE_ROLE_KEY (e.g. VEROVOLLEY_SUPABASE_URL). Everyone else uses SUPABASE_URL.
+ */
+export const TEAMS = ['verovolley'] as const
+export type Team = (typeof TEAMS)[number]
+
+/** the `team` of a request (?team=…): null without one, 'invalid' for an unknown team */
+export const teamOf = (request: Request): Team | null | 'invalid' => {
+  const team = new URL(request.url).searchParams.get('team')
+  if (!team) return null
+  return (TEAMS as readonly string[]).includes(team) ? (team as Team) : 'invalid'
+}
+
+export const databaseOf = (team: Team | null = null) => {
+  const prefix = team ? `${team.toUpperCase()}_` : ''
+  return { url: process.env[`${prefix}SUPABASE_URL`] ?? '', key: process.env[`${prefix}SUPABASE_SERVICE_ROLE_KEY`] ?? '' }
+}
+
+export const databaseConfigured = (team: Team | null = null) => {
+  const db = databaseOf(team)
+  return Boolean(db.url && db.key)
+}
+
+/** REST call to the database of a team (or the main one) */
+export const supabaseFor = (team: Team | null) => (path: string, init: RequestInit = {}) => {
+  const { url, key } = databaseOf(team)
+  return fetch(`${url}/rest/v1/${path}`, {
+    ...init,
+    headers: {
+      apikey: key,
+      ...(key.startsWith('eyJ') ? { Authorization: `Bearer ${key}` } : {}),
+      'Content-Type': 'application/json',
+      'User-Agent': 'bab-endpoint/1.0',
+      ...init.headers,
+    },
+  })
+}
+
 export const supabase = (path: string, init: RequestInit = {}) => {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
   return fetch(`${process.env.SUPABASE_URL}/rest/v1/${path}`, {

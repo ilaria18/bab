@@ -4,6 +4,8 @@
  * the text and which part of the app it's about. The server keeps only the week it arrived.
  */
 
+import { withTeam } from '@/shared/lib/team'
+
 export const FEEDBACK_API = '/api/feedback'
 export const MAX_MESSAGE = 1000
 
@@ -13,7 +15,8 @@ export type FeedbackScreen = 'general' | 'check-in' | 'journal' | 'patterns' | '
 export type Feedback = { kind: FeedbackKind; message: string; screen: FeedbackScreen }
 
 export const sendFeedback = async (feedback: Feedback): Promise<void> => {
-  const response = await fetch(FEEDBACK_API, {
+  // a team's pilot keeps its feedback in its own database
+  const response = await fetch(withTeam(FEEDBACK_API), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ ...feedback, message: feedback.message.trim() }),

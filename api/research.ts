@@ -1,6 +1,6 @@
 /// <reference types="node" />
 import { createHash, timingSafeEqual } from 'node:crypto'
-import { dbError, json, supabase } from './_reminders.js'
+import { databaseConfigured, dbError, json, supabaseFor, teamOf } from './_reminders.js'
 
 /**
  * The pilot's research data: an athlete's check-ins, sent from her phone only when she taps
@@ -140,11 +140,11 @@ const readJson = async (request: Request): Promise<Record<string, unknown> | nul
   }
 }
 
-const configured = () => Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)
+type Db = ReturnType<typeof supabaseFor>
 
 /** 'new' if no one has used this code yet, 'ok' if the token matches, 'forbidden' otherwise */
-const checkOwner = async (code: string, token: string): Promise<'new' | 'ok' | 'forbidden'> => {
-  const response = await supabase(`research_participants?code=eq.${code}&select=token_hash`)
+const checkOwner = async (db: Db, code: string, token: string): Promise<'new' | 'ok' | 'forbidden'> => {
+  const response = await db(`research_participants?code=eq.${code}&select=token_hash`)
   if (!response.ok) throw new Error(`participants: ${await dbError(response)}`)
   const [existing] = (await response.json()) as { token_hash: string }[]
   if (!existing) return 'new'
@@ -157,8 +157,12 @@ const failed = async (what: string, response: Response) => {
 }
 
 export async function POST(request: Request): Promise<Response> {
+  const team = teamOf(request)
+  if (team === 'invalid') return json(400, { error: 'unknown_team' })
+  // a team's pilot keeps its research data in its own database
+  const db = supabaseFor(team)
   if (process.env.RESEARCH_UPLOAD !== 'on') return json(403, { error: 'closed' })
-  if (!configured()) return json(503, { error: 'not_configured' })
+  if (!databaseConfigured(team)) return json(503, { error: 'not_configured' })
   const body = await readJson(request)
   const code = body?.code
   const token = body?.token
@@ -182,27 +186,27 @@ export async function POST(request: Request): Promise<Response> {
   if (!routine) return json(400, { error: 'invalid_routine' })
 
   try {
-    const owner = await checkOwner(code, token)
+    const owner = await checkOwner(db, code, token)
     if (owner === 'forbidden') return json(403, { error: 'forbidden' })
     const now = new Date().toISOString()
     const participant = { code, token_hash: hash(token), consent_version: consentVersion, routine, updated_at: now }
     const saved =
       owner === 'new'
-        ? await supabase('research_participants', {
+        ? await db('research_participants', {
             method: 'POST',
             headers: { Prefer: 'return=minimal' },
             body: JSON.stringify({ ...participant, consented_at: now }),
           })
-        : await supabase(`research_participants?code=eq.${code}`, {
+        : await db(`research_participants?code=eq.${code}`, {
             method: 'PATCH',
             body: JSON.stringify({ consent_version: consentVersion, routine, updated_at: now }),
           })
     if (!saved.ok) return failed('save the participant', saved)
 
     // replace what this phone sent before, so check-ins deleted on the phone disappear here too
-    const cleared = await supabase(`research_checkins?participant=eq.${code}`, { method: 'DELETE' })
+    const cleared = await db(`research_checkins?participant=eq.${code}`, { method: 'DELETE' })
     if (!cleared.ok) return failed('clear the old rows', cleared)
-    const inserted = await supabase('research_checkins', {
+    const inserted = await db('research_checkins', {
       method: 'POST',
       headers: { Prefer: 'return=minimal' },
       body: JSON.stringify(rows),
@@ -216,7 +220,11 @@ export async function POST(request: Request): Promise<Response> {
 }
 
 export async function DELETE(request: Request): Promise<Response> {
-  if (!configured()) return json(503, { error: 'not_configured' })
+  const team = teamOf(request)
+  if (team === 'invalid') return json(400, { error: 'unknown_team' })
+  // a team's pilot keeps its research data in its own database
+  const db = supabaseFor(team)
+  if (!databaseConfigured(team)) return json(503, { error: 'not_configured' })
   const body = await readJson(request)
   const code = body?.code
   const token = body?.token
@@ -224,11 +232,11 @@ export async function DELETE(request: Request): Promise<Response> {
     return json(400, { error: 'invalid' })
   }
   try {
-    const owner = await checkOwner(code, token)
+    const owner = await checkOwner(db, code, token)
     if (owner === 'forbidden') return json(403, { error: 'forbidden' })
     if (owner === 'new') return json(200, { ok: true }) // nothing was ever sent
     // the check-ins go with the participant (on delete cascade)
-    const deleted = await supabase(`research_participants?code=eq.${code}`, { method: 'DELETE' })
+    const deleted = await db(`research_participants?code=eq.${code}`, { method: 'DELETE' })
     if (!deleted.ok) return failed('delete the participant', deleted)
     return json(200, { ok: true })
   } catch (error) {

@@ -1,11 +1,12 @@
 /// <reference types="node" />
 import { timingSafeEqual } from 'node:crypto'
-import { dbError, json, supabase } from './_reminders.js'
+import { databaseConfigured, dbError, json, supabaseFor, teamOf } from './_reminders.js'
 
 /**
  * Anonymous feedback from the athletes (the app's "Feedback" tab).
  *
  * POST { kind, message, screen }                  stores one message (anyone with the app)
+ * ?team=verovolley (both methods): that team's own database instead of the main one
  * GET  ?start=YYYY-MM-DD  + Authorization: Bearer <DASHBOARD_PASSWORD>
  *                                                  the messages for the dashboard, newest first
  *
@@ -28,7 +29,6 @@ const readJson = async (request: Request): Promise<Record<string, unknown> | nul
   }
 }
 
-const configured = () => Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY)
 
 /** Monday of the week of a YYYY-MM-DD day */
 export const weekStart = (day: string): string => {
@@ -51,10 +51,12 @@ export const toFeedbackRow = (body: Record<string, unknown> | null, today: strin
 }
 
 export async function POST(request: Request): Promise<Response> {
-  if (!configured()) return json(503, { error: 'not_configured' })
+  const team = teamOf(request)
+  if (team === 'invalid') return json(400, { error: 'unknown_team' })
+  if (!databaseConfigured(team)) return json(503, { error: 'not_configured' })
   const row = toFeedbackRow(await readJson(request), new Date().toISOString().slice(0, 10))
   if (!row) return json(400, { error: 'invalid' })
-  const response = await supabase('feedback', {
+  const response = await supabaseFor(team)('feedback', {
     method: 'POST',
     headers: { Prefer: 'return=minimal' },
     body: JSON.stringify(row),
@@ -74,7 +76,9 @@ const passwordMatches = (given: string, expected: string) => {
 
 export async function GET(request: Request): Promise<Response> {
   const expected = process.env.DASHBOARD_PASSWORD
-  if (!expected || !configured()) return json(503, { error: 'not_configured' })
+  const team = teamOf(request)
+  if (team === 'invalid') return json(400, { error: 'unknown_team' })
+  if (!expected || !databaseConfigured(team)) return json(503, { error: 'not_configured' })
   const given = (request.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '')
   if (!passwordMatches(given, expected)) {
     await new Promise((resolve) => setTimeout(resolve, 800)) // slows down guessing
@@ -82,7 +86,7 @@ export async function GET(request: Request): Promise<Response> {
   }
   const start = new URL(request.url).searchParams.get('start')
   const filter = start && DAY.test(start) ? `&day=gte.${weekStart(start)}` : ''
-  const response = await supabase(`feedback?select=day,kind,screen,message&order=day.desc,id.desc&limit=500${filter}`)
+  const response = await supabaseFor(team)(`feedback?select=day,kind,screen,message&order=day.desc,id.desc&limit=500${filter}`)
   if (!response.ok) {
     console.error('Could not read the feedback', await dbError(response))
     return json(502, { error: 'database' })

@@ -4,6 +4,7 @@ import { appPlatform, isInstalledWebApp, isNativeApp, type AppPlatform } from '@
 import { toDateKey } from '@/shared/lib/dateKey'
 import { safeStorage } from '@/shared/lib/safeStorage'
 import { getTrainingRoutine, type Session } from '@/features/reminder/trainingRoutine'
+import { currentTeam, type Team } from '@/shared/lib/team'
 
 /**
  * Anonymous usage statistics.
@@ -67,6 +68,13 @@ export type RoutineRow = {
 
 /** what goes to the server: visit rows, and the weekly routine row */
 export type UsageRow = UsageEvent | RoutineRow
+
+/**
+ * Where the rows go: VITE_USAGE_ENDPOINT (…/api/usage), or for a phone tagged with a team's pilot
+ * that team's endpoint (…/api/team-usage?team=…), which stores visits and routines in its database.
+ */
+export const usageEndpoint = (base: string | undefined, team: Team | null): string | undefined =>
+  base && team ? base.replace(/\/api\/usage\/?$/, `/api/team-usage?team=${team}`) : base
 
 /** routine rows go to their own endpoint next to the visits' one: /api/usage → /api/usage-routine */
 export const routineEndpoint = (endpoint: string): string | null =>
@@ -196,6 +204,8 @@ const post = async (endpoint: string, events: UsageRow[]): Promise<boolean> => {
 }
 
 const defaultSend = async (endpoint: string, events: UsageRow[]): Promise<boolean> => {
+  // a team's endpoint takes visits and routines together
+  if (endpoint.includes('/api/team-usage')) return post(endpoint, events)
   const routines = events.filter(isRoutineRow)
   const visits = events.filter((row) => !isRoutineRow(row))
   const routineUrl = routineEndpoint(endpoint)
@@ -208,7 +218,7 @@ const defaultSend = async (endpoint: string, events: UsageRow[]): Promise<boolea
 
 /** Starts measuring visits. Returns a function that stops listening (used by tests). */
 export const startUsageStats = ({
-  endpoint = import.meta.env.VITE_USAGE_ENDPOINT as string | undefined,
+  endpoint = usageEndpoint(import.meta.env.VITE_USAGE_ENDPOINT as string | undefined, currentTeam()),
   platform = appPlatform(),
   native = isNativeApp(),
   counted = usageStatsCounted(native),

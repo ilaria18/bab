@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import { timingSafeEqual } from 'node:crypto'
 import { computeMetrics, isoWeek, PILOT_DAYS, PILOT_WEEKS, type RoutineWeekRow, type VisitRow } from './_metrics.js'
-import { dbError } from './_reminders.js'
+import { databaseConfigured, databaseOf, dbError, teamOf, type Team } from './_reminders.js'
 
 /**
  * The pilot's metrics for the dashboard (public/dashboard.html), as JSON.
@@ -34,11 +34,11 @@ const passwordMatches = (given: string, expected: string) => {
 }
 
 /** Reads every row matching `query` from a table, a page at a time. */
-const readAll = async <T>(table: string, query: string): Promise<T[]> => {
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? ''
+const readAll = async <T>(table: string, query: string, team: Team | null = null): Promise<T[]> => {
+  const { url, key } = databaseOf(team)
   const rows: T[] = []
   for (let from = 0; ; from += PAGE) {
-    const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/${table}?${query}`, {
+    const response = await fetch(`${url}/rest/v1/${table}?${query}`, {
       headers: {
         apikey: key,
         ...(key.startsWith('eyJ') ? { Authorization: `Bearer ${key}` } : {}),
@@ -56,7 +56,9 @@ const readAll = async <T>(table: string, query: string): Promise<T[]> => {
 
 export async function GET(request: Request): Promise<Response> {
   const expected = process.env.DASHBOARD_PASSWORD
-  if (!expected || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  const team = teamOf(request)
+  if (team === 'invalid') return json(400, { error: 'unknown_team' })
+  if (!expected || !databaseConfigured(team)) {
     console.error('DASHBOARD_PASSWORD, SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set')
     return json(503, { error: 'not_configured' })
   }
@@ -79,8 +81,8 @@ export async function GET(request: Request): Promise<Response> {
       isoWeek(new Date(Date.parse(`${start}T00:00:00Z`) + i * 7 * 86_400_000).toISOString().slice(0, 10)),
     )
     const [visits, routines] = await Promise.all([
-      readAll<VisitRow>('usage_visits', `select=*&day=gte.${start}&day=lt.${end}`),
-      readAll<RoutineWeekRow>('usage_routines', `select=week,sessions,platform&week=in.(${weeks.join(',')})`),
+      readAll<VisitRow>('usage_visits', `select=*&day=gte.${start}&day=lt.${end}`, team),
+      readAll<RoutineWeekRow>('usage_routines', `select=week,sessions,platform&week=in.(${weeks.join(',')})`, team),
     ])
     return json(200, { ...computeMetrics(start, visits, platform, routines), pilotStart: process.env.PILOT_START ?? null })
   } catch (error) {

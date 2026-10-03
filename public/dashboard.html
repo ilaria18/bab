@@ -124,7 +124,8 @@
   #login form { display: flex; flex-direction: column; gap: 12px; }
   .error { color: var(--danger); font-size: 13px; min-height: 18px; }
   .tabs { display: flex; gap: 4px; margin: 0 0 16px; border-bottom: 1px solid var(--border); }
-  .tabs button { border: none; border-bottom: 2px solid transparent; border-radius: 0; background: none; color: var(--ink-2); padding: 10px 14px; }
+  .tabs { overflow-x: auto; }
+  .tabs button { white-space: nowrap; border: none; border-bottom: 2px solid transparent; border-radius: 0; background: none; color: var(--ink-2); padding: 10px 14px; }
   .tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
   [hidden] { display: none !important; }
 </style>
@@ -168,6 +169,8 @@
     <div class="tabs" role="tablist">
       <button type="button" role="tab" id="tab-usage" aria-selected="true" aria-controls="content">App use</button>
       <button type="button" role="tab" id="tab-research" aria-selected="false" aria-controls="research">Check-ins</button>
+      <button type="button" role="tab" id="tab-team-usage" aria-selected="false" aria-controls="content">VeroVolley · App use</button>
+      <button type="button" role="tab" id="tab-team-research" aria-selected="false" aria-controls="research">VeroVolley · Check-ins</button>
     </div>
 
     <div id="content" role="tabpanel" aria-labelledby="tab-usage">
@@ -562,6 +565,7 @@
   const loadFeedback = async () => {
     const params = new URLSearchParams()
     if ($('start').value) params.set('start', $('start').value)
+    if (team) params.set('team', team)
     try {
       const response = await fetch(`/api/feedback?${params}`, { headers: { Authorization: `Bearer ${password}` }, cache: 'no-store' })
       feedback = response.ok ? await response.json() : null
@@ -574,6 +578,8 @@
   // ── check-ins tab ─────────────────────────────────────────────────────────────────────
   let research = null
   let tab = 'usage'
+  /** '' = everyone else (main database); 'verovolley' = the team's own pilot database */
+  let team = ''
 
   const emptyChart = (container, text) => container.replaceChildren(el('div', { class: 'empty' }, text))
 
@@ -758,6 +764,7 @@
   const loadResearch = async () => {
     const params = new URLSearchParams()
     if ($('start').value) params.set('start', $('start').value)
+    if (team) params.set('team', team)
     $('research').classList.add('loading')
     try {
       const response = await fetch(`/api/research-metrics?${params}`, { headers: { Authorization: `Bearer ${password}` }, cache: 'no-store' })
@@ -773,15 +780,20 @@
     }
   }
 
+  const TABS = { usage: ['usage', ''], research: ['research', ''], 'team-usage': ['usage', 'verovolley'], 'team-research': ['research', 'verovolley'] }
   const showTab = (name) => {
-    tab = name
-    $('tab-usage').setAttribute('aria-selected', String(name === 'usage'))
-    $('tab-research').setAttribute('aria-selected', String(name === 'research'))
-    $('content').hidden = name !== 'usage'
-    $('research').hidden = name !== 'research'
+    const [view, nextTeam] = TABS[name]
+    for (const id of Object.keys(TABS)) $(`tab-${id}`).setAttribute('aria-selected', String(id === name))
+    $('content').hidden = view !== 'usage'
+    $('research').hidden = view !== 'research'
     // the check-ins don't record the phone type
-    $('platform').closest('label').hidden = name === 'research'
-    if (name === 'research') loadResearch()
+    $('platform').closest('label').hidden = view === 'research'
+    const teamChanged = nextTeam !== team
+    tab = view
+    team = nextTeam
+    if (teamChanged) { data = null; research = null; feedback = null }
+    if (view === 'research') loadResearch()
+    else if (teamChanged) load()
     else render()
   }
 
@@ -789,6 +801,7 @@
   const load = async () => {
     const params = new URLSearchParams()
     if ($('start').value) params.set('start', $('start').value)
+    if (team) params.set('team', team)
     if ($('platform').value) params.set('platform', $('platform').value)
     $('content').classList.add('loading')
     try {
@@ -833,6 +846,8 @@
   $('filters').addEventListener('submit', (e) => { e.preventDefault(); if (tab === 'research') loadResearch(); else load() })
   $('tab-usage').addEventListener('click', () => showTab('usage'))
   $('tab-research').addEventListener('click', () => showTab('research'))
+  $('tab-team-usage').addEventListener('click', () => showTab('team-usage'))
+  $('tab-team-research').addEventListener('click', () => showTab('team-research'))
   $('platform').addEventListener('change', load)
   $('logout').addEventListener('click', () => logout())
   let resizeTimer

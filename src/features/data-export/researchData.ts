@@ -3,6 +3,7 @@ import type { DailyLog } from '@/entities/daily-log/types'
 import { createId } from '@/shared/lib/createId'
 import { safeStorage } from '@/shared/lib/safeStorage'
 import type { Session } from '@/features/reminder/trainingRoutine'
+import { withTeam } from '@/shared/lib/team'
 
 /**
  * The athlete's own check-ins, sent to the BAB research database (api/research.ts) only when she
@@ -126,7 +127,7 @@ export const buildRows = (
 
 /** Sends everything; what this phone sent before is replaced (so deleted check-ins go too). */
 export const sendResearchData = async (rows: ResearchRow[], routine: Session[] = []): Promise<void> => {
-  const response = await fetch(RESEARCH_API, {
+  const response = await fetch(withTeam(RESEARCH_API), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ code: participantCode(), token: participantToken(), consentVersion: CONSENT_VERSION, rows, routine }),
@@ -138,7 +139,7 @@ export const sendResearchData = async (rows: ResearchRow[], routine: Session[] =
 
 /** Deletes from the database everything this phone sent (the check-ins stay on the phone). */
 export const deleteResearchData = async (): Promise<void> => {
-  const response = await fetch(RESEARCH_API, {
+  const response = await fetch(withTeam(RESEARCH_API), {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ code: participantCode(), token: participantToken() }),

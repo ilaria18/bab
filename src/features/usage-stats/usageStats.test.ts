@@ -6,6 +6,7 @@ import {
   setUsageConsent,
   startUsageStats,
   routineEndpoint,
+  usageEndpoint,
   usageStatsCounted,
   type RoutineRow,
   type UsageEvent,
@@ -106,6 +107,9 @@ describe('usage stats', () => {
     ])
     expect(routineEndpoint('https://bab-analytics.vercel.app/api/usage')).toBe('https://bab-analytics.vercel.app/api/usage-routine')
     expect(routineEndpoint('https://example.test/other')).toBeNull()
+    // a team's phone sends everything to the team's endpoint
+    expect(usageEndpoint('https://bab-analytics.vercel.app/api/usage', 'verovolley')).toBe('https://bab-analytics.vercel.app/api/team-usage?team=verovolley')
+    expect(usageEndpoint('https://bab-analytics.vercel.app/api/usage', null)).toBe('https://bab-analytics.vercel.app/api/usage')
   })
 
   it('counts a quick return as the same visit', async () => {
